@@ -3,18 +3,6 @@
 #include <iostream>
 #include <QDebug>
 
-bool isSorted(std::vector<int> seq)
-{
-    for (size_t i = 0; i < seq.size(); ++i)
-    {
-        if (i >= 1 && seq[i - 1] > seq[i])
-        {
-            return false;
-        }
-    }
-    return true;
-}
-
 std::vector<int> getPermutation(std::vector<int> seq, int k)
 {
     size_t n = seq.size();
@@ -56,7 +44,7 @@ void bogosort(std::vector<int> seq, ThreadManager *pManager, size_t startSeed, s
             pManager->incrementPercentComputed((double)100 / totalCount);
         }
 
-        if (isSorted(attempt))
+        if (std::is_sorted(attempt.begin(), attempt.end()))
         {
             result = attempt;
             pManager->finished = true;
