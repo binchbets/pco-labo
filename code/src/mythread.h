@@ -24,4 +24,5 @@
  */
 void bogosort(std::vector<int> seq, ThreadManager *pManager, size_t startSeed, size_t maxSeed, std::vector<int> &result);
 
+long factorial(const int n);
 #endif // MYTHREAD_H

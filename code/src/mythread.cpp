@@ -3,6 +3,14 @@
 #include <iostream>
 #include <QDebug>
 
+long factorial(const int n)
+{
+    long f = 1;
+    for (int i = 1; i <= n; ++i)
+        f *= i;
+    return f;
+}
+
 std::vector<int> getPermutation(std::vector<int> seq, int k)
 {
     size_t n = seq.size();

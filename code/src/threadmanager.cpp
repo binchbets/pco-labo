@@ -9,14 +9,6 @@ ThreadManager::ThreadManager(QObject *parent) : QObject(parent)
 {
 }
 
-long factorial(const int n)
-{
-    long f = 1;
-    for (int i = 1; i <= n; ++i)
-        f *= i;
-    return f;
-}
-
 /**
  * @brief Cette fonction trie une séquence générée aléatoirement
  * @param seq séquence à trier

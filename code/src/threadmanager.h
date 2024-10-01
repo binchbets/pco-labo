@@ -66,6 +66,4 @@ signals:
     void sig_incrementPercentComputed(double percentComputed);
 };
 
-long factorial(const int n);
-
 #endif // THREADMANAGER_H
