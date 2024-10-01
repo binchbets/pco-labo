@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env sh
 
 PROJECT_DIR=code
 REPORT_FILE=rapport.pdf

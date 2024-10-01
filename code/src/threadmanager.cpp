@@ -21,7 +21,13 @@ std::vector<int> ThreadManager::startSorting(
 {
     finished = false;
 
-    long sizePerThread = (factorial(seq.size()) / nbThreads) + 2;
+    unsigned int maxTasks = factorial(seq.size());
+
+    // We cap the number of threads to the max number of available of tasks
+    // -> This is to ensure that only one thread can find the sorted sequence.
+    nbThreads = std::max(maxTasks, nbThreads);
+
+    long sizePerThread = (maxTasks / nbThreads) + 1;
 
     std::vector<int> result = seq;
 
