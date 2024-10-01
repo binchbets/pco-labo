@@ -19,13 +19,12 @@
 #include <QCryptographicHash>
 #include <QVector>
 
-
 /**
  * @brief The ThreadManager class
  *
  * Cette classe permet de trier une séquence avec du Bogosort déterministe.
  */
-class ThreadManager: public QObject
+class ThreadManager : public QObject
 {
     Q_OBJECT
 
@@ -43,9 +42,8 @@ public:
      * @return séquence triée
      */
     std::vector<int> startSorting(
-            std::vector<int> seq,
-            unsigned int nbThreads
-    );
+        std::vector<int> seq,
+        unsigned int nbThreads);
 
     /**
      * @brief incrementPercentComputed fonction qui indique que le pourcentage
@@ -66,7 +64,8 @@ signals:
      * trier la séquence
      */
     void sig_incrementPercentComputed(double percentComputed);
-
 };
+
+long factorial(const int n);
 
 #endif // THREADMANAGER_H

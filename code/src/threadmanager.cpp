@@ -9,6 +9,14 @@ ThreadManager::ThreadManager(QObject *parent) : QObject(parent)
 {
 }
 
+long factorial(const int n)
+{
+    long f = 1;
+    for (int i = 1; i <= n; ++i)
+        f *= i;
+    return f;
+}
+
 /**
  * @brief Cette fonction trie une séquence générée aléatoirement
  * @param seq séquence à trier
@@ -21,10 +29,25 @@ std::vector<int> ThreadManager::startSorting(
 {
     finished = false;
 
-    // TODO création des threads et du vecteur de résultats
-    // TODO lancement des threads avec la fonction Bogosort
-    // TODO arrêt des threads et récupération du tableau trié
-    // TODO retourner le tableau trié
+    long sizePerThread = (factorial(seq.size()) / nbThreads) + 2;
+
+    std::vector<int> result = seq;
+
+    std::vector<PcoThread *> threads;
+
+    for (unsigned int i = 0; i < nbThreads; ++i)
+    {
+        threads.push_back(new PcoThread([=, &result]
+                                        { bogosort(seq, this, sizePerThread * i, sizePerThread, result); }));
+    }
+
+    for (PcoThread *thread : threads)
+    {
+        thread->join();
+        delete thread;
+    }
+
+    return result;
 }
 
 void ThreadManager::incrementPercentComputed(double percentComputed)
