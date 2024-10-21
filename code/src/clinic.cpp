@@ -1,5 +1,6 @@
 #include "clinic.h"
 #include "costs.h"
+#include <cassert>
 #include <pcosynchro/pcothread.h>
 #include <iostream>
 
@@ -9,7 +10,7 @@ Clinic::Clinic(int uniqueId, int fund, std::vector<ItemType> resourcesNeeded)
     : Seller(fund, uniqueId), nbTreated(0), resourcesNeeded(resourcesNeeded)
 {
     interface->updateFund(uniqueId, fund);
-    interface->consoleAppendText(uniqueId, "Factory created");
+    interface->consoleAppendText(uniqueId, "Clinic created");
 
     for(const auto& item : resourcesNeeded) {
         stocks[item] = 0;
@@ -25,8 +26,17 @@ bool Clinic::verifyResources() {
     return true;
 }
 
+// Returns healed patients
 int Clinic::request(ItemType what, int qty){
-    // TODO 
+    assert(what == ItemType::PatientHealed);
+    // TODO
+
+    // Get the number of healed patient we can transfer. We cannot transfer more that the current number of healed
+    // patient in the clinic.
+    int transferredQuantity = std::min(qty, stocks[ItemType::PatientHealed]);
+
+    // We remove the number of patient we transfer from the clinic stock
+    stocks[ItemType::PatientHealed] -= transferredQuantity;
 
     return 0;
 }
@@ -53,7 +63,7 @@ void Clinic::run() {
     }
     interface->consoleAppendText(uniqueId, "[START] Factory routine");
 
-    while (true /*TODO*/) {
+    while (!PcoThread::thisThread()->stopRequested()) {
         
         if (verifyResources()) {
             treatPatient();
@@ -83,6 +93,7 @@ void Clinic::setHospitalsAndSuppliers(std::vector<Seller*> hospitals, std::vecto
 }
 
 int Clinic::getTreatmentCost() {
+    // TODO??
     return 0;
 }
 
@@ -94,8 +105,12 @@ int Clinic::getNumberPatients(){
     return stocks[ItemType::PatientSick] + stocks[ItemType::PatientHealed];
 }
 
-int Clinic::send(ItemType it, int qty, int bill){
-    return 0;
+int Clinic::send(ItemType it, int qty, int bill) {
+    assert(it == ItemType::PatientSick);
+
+    stocks[ItemType::PatientSick] += qty;
+
+    return qty;
 }
 
 int Clinic::getAmountPaidToWorkers() {

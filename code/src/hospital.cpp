@@ -1,6 +1,7 @@
 #include "hospital.h"
 #include "costs.h"
 #include <iostream>
+#include <cassert>
 #include <pcosynchro/pcothread.h>
 
 IWindowInterface* Hospital::interface = nullptr;
@@ -18,9 +19,15 @@ Hospital::Hospital(int uniqueId, int fund, int maxBeds)
     }
 }
 
-int Hospital::request(ItemType what, int qty){
-    // TODO 
-    return 0;
+int Hospital::request(ItemType what, int qty) {
+    // The method documentation talks about either requesting sick or healed patient.
+    assert(what == ItemType::PatientSick || what == ItemType::PatientHealed);
+
+    int currentSickPatients = nbHospitalised - nbFree;
+    int takes =  std::min(currentSickPatients, qty);
+    nbHospitalised -= takes;
+
+    return takes;
 }
 
 void Hospital::freeHealedPatient() {
@@ -31,9 +38,20 @@ void Hospital::transferPatientsFromClinic() {
     // TODO
 }
 
+// TODO: Should we return the number of patients we took
+//       even if this number is less than the `qty` or
+//       should we just refuse the transfer ?
 int Hospital::send(ItemType it, int qty, int bill) {
     // TODO
-    return 0;
+    assert(it == ItemType::PatientSick);
+
+    int availableBeds = maxBeds - currentBeds;
+    int takes = std::min(qty, availableBeds);
+    stocks[ItemType::PatientSick] += takes;
+    currentBeds += takes;
+    nbHospitalised += takes;
+
+    return takes;
 }
 
 void Hospital::run()
@@ -45,7 +63,7 @@ void Hospital::run()
 
     interface->consoleAppendText(uniqueId, "[START] Hospital routine");
 
-    while (true /*TODO*/) {
+    while (!PcoThread::thisThread()->stopRequested()) {
         transferPatientsFromClinic();
 
         freeHealedPatient();
