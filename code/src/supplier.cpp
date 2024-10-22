@@ -1,5 +1,6 @@
 #include "supplier.h"
 #include "costs.h"
+#include <cassert>
 #include <pcosynchro/pcothread.h>
 
 IWindowInterface* Supplier::interface = nullptr;
@@ -18,7 +19,18 @@ Supplier::Supplier(int uniqueId, int fund, std::vector<ItemType> resourcesSuppli
 
 int Supplier::request(ItemType it, int qty) {
     // TODO
-    return 0;
+    assert(it != ItemType::Syringe || it != ItemType::Pill || it != ItemType::Scalpel || it != ItemType::Thermometer || it != ItemType::Stethoscope);
+
+    if (stocks[it] < qty) {
+        // We do not have enough items in stock.
+        return 0;
+    }
+
+    stocks[it] -= qty;
+    int price = qty * getCostPerUnit(it);
+    money += price;
+
+    return price;
 }
 
 void Supplier::run() {
@@ -26,7 +38,11 @@ void Supplier::run() {
     while (!PcoThread::thisThread()->stopRequested()) {
         ItemType resourceSupplied = getRandomItemFromStock();
         int supplierCost = getEmployeeSalary(getEmployeeThatProduces(resourceSupplied));
-        // TODO 
+        // TODO
+        if (money >= supplierCost) {
+            stocks[resourceSupplied]++;
+            money -= supplierCost;
+        }
 
         /* Temps aléatoire borné qui simule l'attente du travail fini*/
         interface->simulateWork();

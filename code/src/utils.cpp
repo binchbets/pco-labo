@@ -3,6 +3,9 @@
 
 void Utils::endService() {
     // TODO
+    for (auto& thread : threads) {
+        thread->join();
+    }
 }
 
 void Utils::externalEndService() {

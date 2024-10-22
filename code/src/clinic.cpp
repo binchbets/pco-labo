@@ -42,18 +42,41 @@ int Clinic::request(ItemType what, int qty){
 }
 
 void Clinic::treatPatient() {
-    // TODO 
+    // TODO
+
+    ItemType item1 = resourcesNeeded[1];
+    ItemType item2 = resourcesNeeded[2];
+
+    // We probably don't have to check if we have the items needed to treat a new patient as `treatPatient()` is only
+    // called if we have the required items in stock.
+    stocks[item1]--;
+    stocks[item2]--;
 
     //Temps simulant un traitement 
     interface->simulateWork();
 
-    // TODO 
-    
+    // TODO
+    stocks[ItemType::PatientSick]--;
+    stocks[ItemType::PatientHealed]++;
+    nbTreated++;
+
     interface->consoleAppendText(uniqueId, "Clinic have healed a new patient");
 }
 
 void Clinic::orderResources() {
-    // TODO 
+    // TODO
+    Seller* hospital = chooseRandomSeller(hospitals);
+    if (hospital->request(ItemType::PatientSick, 1)) {
+        stocks[ItemType::PatientSick]++;
+    }
+
+   for (auto& supplier : suppliers) {
+       for (auto& item : resourcesNeeded) {
+           if (supplier->request(item, 1)) {
+               stocks[item]++;
+           }
+       }
+   }
 }
 
 void Clinic::run() {
@@ -61,7 +84,7 @@ void Clinic::run() {
         std::cerr << "You have to give to hospitals and suppliers to run a clinic" << std::endl;
         return;
     }
-    interface->consoleAppendText(uniqueId, "[START] Factory routine");
+    interface->consoleAppendText(uniqueId, "[START] Clinic routine");
 
     while (!PcoThread::thisThread()->stopRequested()) {
         
@@ -76,7 +99,7 @@ void Clinic::run() {
         interface->updateFund(uniqueId, money);
         interface->updateStock(uniqueId, &stocks);
     }
-    interface->consoleAppendText(uniqueId, "[STOP] Factory routine");
+    interface->consoleAppendText(uniqueId, "[STOP] Clinic routine");
 }
 
 
