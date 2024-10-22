@@ -38,7 +38,8 @@ int Clinic::request(ItemType what, int qty){
     // We remove the number of patient we transfer from the clinic stock
     stocks[ItemType::PatientHealed] -= transferredQuantity;
 
-    return 0;
+    // TODO(alexandre): What should we return here ?
+    return transferredQuantity;
 }
 
 void Clinic::treatPatient() {

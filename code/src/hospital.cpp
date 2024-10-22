@@ -36,6 +36,18 @@ void Hospital::freeHealedPatient() {
 
 void Hospital::transferPatientsFromClinic() {
     // TODO
+    Seller* clinic = chooseRandomSeller(clinics);
+
+    if (currentBeds >= maxBeds) {
+        // We cannot accept any healed patients as we don't have any free beds.
+        return;
+    }
+
+    if (clinic->request(ItemType::PatientHealed, 1)) {
+        stocks[ItemType::PatientHealed]++;
+        currentBeds++;
+        nbHospitalised++;
+    }
 }
 
 // TODO: Should we return the number of patients we took
