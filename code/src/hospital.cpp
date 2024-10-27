@@ -11,7 +11,7 @@ Hospital::Hospital(int uniqueId, int fund, int maxBeds)
 {
     interface->updateFund(uniqueId, fund);
     interface->consoleAppendText(uniqueId, "Hospital Created with " + QString::number(maxBeds) + " beds");
-    
+
     std::vector<ItemType> initialStocks = { ItemType::PatientHealed, ItemType::PatientSick };
 
     for(const auto& item : initialStocks) {
@@ -31,7 +31,19 @@ int Hospital::request(ItemType what, int qty) {
 }
 
 void Hospital::freeHealedPatient() {
-    // TODO 
+    // TODO
+    int toFree = patientsToFree.front();
+    nbFree += toFree;
+    currentBeds -= toFree;
+
+    /**
+     * We shift the position of patients to free to the left as we handled the release of patient
+     * for the day.
+     */
+    for (size_t i = patientsToFree.size() -1; i > 0; i--) {
+        patientsToFree[i - 1] = patientsToFree[i];
+    }
+    patientsToFree.back() = 0;
 }
 
 void Hospital::transferPatientsFromClinic() {
@@ -43,10 +55,13 @@ void Hospital::transferPatientsFromClinic() {
         return;
     }
 
-    if (clinic->request(ItemType::PatientHealed, 1)) {
-        stocks[ItemType::PatientHealed]++;
-        currentBeds++;
-        nbHospitalised++;
+    int quantity = 1;
+    if (clinic->request(ItemType::PatientHealed, quantity)) {
+        stocks[ItemType::PatientHealed] += quantity;
+        currentBeds += quantity;
+        nbHospitalised += quantity;
+
+        patientsToFree.at(patientsToFree.size() - 1) = quantity;
     }
 }
 

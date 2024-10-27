@@ -104,6 +104,13 @@ private:
 
     int nbFree; // Nombre de personnes qui sont sorties soignées de l'hôpital.
 
+    static const size_t FREE_PATIENTS_IN_DAYS = 5;
+
+    /**
+     * Stores the number of patients to free in `i` days, where `i` is the position in the array
+     */
+    std::array<int, FREE_PATIENTS_IN_DAYS> patientsToFree = std::array<int, FREE_PATIENTS_IN_DAYS>({0, 0, 0, 0, 0});
+
     static IWindowInterface* interface;  // Pointeur statique vers l'interface utilisateur pour les logs et mises à jour visuelles
 };
 
