@@ -35,6 +35,7 @@ void Hospital::freeHealedPatient() {
     int toFree = patientsToFree.front();
     nbFree += toFree;
     currentBeds -= toFree;
+    stocks[ItemType::PatientHealed] -= toFree;
 
     /**
      * We shift the position of patients to free to the left as we handled the release of patient
