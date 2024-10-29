@@ -78,7 +78,7 @@ void WindowInterface::initialize(unsigned int nbExtractors, unsigned int nbFacto
 }
 
 void WindowInterface::simulateWork(){
-    PcoThread::usleep((rand() % 100 + 1) * 10000);
+    PcoThread::usleep((rand() % 100 + 1) * 1000);
 }
 
 void WindowInterface::setUtils(Utils* utils)

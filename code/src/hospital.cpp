@@ -24,8 +24,10 @@ int Hospital::request(ItemType what, int qty) {
     assert(what == ItemType::PatientSick || what == ItemType::PatientHealed);
 
     int currentSickPatients = nbHospitalised - nbFree;
-    int takes =  std::min(currentSickPatients, qty);
+    int takes = std::min(currentSickPatients, qty);
     nbHospitalised -= takes;
+    stocks[ItemType::PatientSick] -= takes;
+    currentBeds -= takes;
 
     return takes;
 }
