@@ -6,7 +6,7 @@
 IWindowInterface* Supplier::interface = nullptr;
 
 Supplier::Supplier(int uniqueId, int fund, std::vector<ItemType> resourcesSupplied)
-    : Seller(fund, uniqueId), resourcesSupplied(resourcesSupplied), nbSupplied(0) 
+    : Seller(fund, uniqueId), resourcesSupplied(resourcesSupplied), nbSupplied(0), mutex()
 {
     for (const auto& item : resourcesSupplied) {    
         stocks[item] = 0;    
@@ -21,14 +21,22 @@ int Supplier::request(ItemType it, int qty) {
     // TODO
     assert(it != ItemType::Syringe || it != ItemType::Pill || it != ItemType::Scalpel || it != ItemType::Thermometer || it != ItemType::Stethoscope);
 
+    if (qty < 1) {
+        return 0;
+    }
+
     if (stocks[it] < qty) {
         // We do not have enough items in stock.
         return 0;
     }
 
+    mutex.lock();
+
     stocks[it] -= qty;
     int price = qty * getCostPerUnit(it);
     money += price;
+
+    mutex.unlock();
 
     return price;
 }

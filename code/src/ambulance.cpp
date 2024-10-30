@@ -34,6 +34,7 @@ void Ambulance::sendPatient(){
         stocks[ItemType::PatientSick] -= quantity;
         nbTransfer += quantity;
         money += credit;
+        money -= getEmployeeSalary(EmployeeType::Supplier);
     }
 }
 

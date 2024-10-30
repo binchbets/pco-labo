@@ -106,6 +106,8 @@ private:
 
     static const size_t FREE_PATIENTS_IN_DAYS = 5;
 
+    PcoMutex mutex;
+
     /**
      * Stores the number of patients to free in `i` days, where `i` is the position in the array
      */

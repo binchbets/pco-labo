@@ -7,7 +7,7 @@
 IWindowInterface* Hospital::interface = nullptr;
 
 Hospital::Hospital(int uniqueId, int fund, int maxBeds)
-    : Seller(fund, uniqueId), maxBeds(maxBeds), currentBeds(0), nbHospitalised(0), nbFree(0)
+    : Seller(fund, uniqueId), maxBeds(maxBeds), currentBeds(0), nbHospitalised(0), nbFree(0), mutex()
 {
     interface->updateFund(uniqueId, fund);
     interface->consoleAppendText(uniqueId, "Hospital Created with " + QString::number(maxBeds) + " beds");
@@ -19,9 +19,19 @@ Hospital::Hospital(int uniqueId, int fund, int maxBeds)
     }
 }
 
+
+/**
+ * Transfers patient out of the hospital (into clinics)
+ */
 int Hospital::request(ItemType what, int qty) {
     // The method documentation talks about either requesting sick or healed patient.
     assert(what == ItemType::PatientSick || what == ItemType::PatientHealed);
+
+    if (stocks[what] < qty) {
+        return 0;
+    }
+
+    mutex.lock();
 
     int currentSickPatients = nbHospitalised - nbFree;
     int takes = std::min(currentSickPatients, qty);
@@ -31,11 +41,15 @@ int Hospital::request(ItemType what, int qty) {
 
     money += getCostPerUnit(what) * qty;
 
+    mutex.unlock();
+
     return takes;
 }
 
 void Hospital::freeHealedPatient() {
     // TODO
+    mutex.lock();
+
     int toFree = patientsToFree.front();
     nbFree += toFree;
     currentBeds -= toFree;
@@ -49,8 +63,16 @@ void Hospital::freeHealedPatient() {
         patientsToFree[i - 1] = patientsToFree[i];
     }
     patientsToFree.back() = 0;
+
+    // As discussed, the hospital gets money each time a patient is transferred out of the hospital.
+    money += getCostPerUnit(ItemType::PatientHealed) * toFree;
+
+    mutex.unlock();
 }
 
+/**
+ * Gets patients from clinic back into the hospital
+ */
 void Hospital::transferPatientsFromClinic() {
     const int quantity = 1;
 
@@ -68,6 +90,8 @@ void Hospital::transferPatientsFromClinic() {
         return;
     }
 
+    mutex.lock();
+
     int credit = clinic->request(ItemType::PatientHealed, quantity);
     if (credit) {
         stocks[ItemType::PatientHealed] += quantity;
@@ -78,14 +102,23 @@ void Hospital::transferPatientsFromClinic() {
 
         money -= credit;
     }
+
+    mutex.unlock();
 }
 
-// TODO: Should we return the number of patients we took
-//       even if this number is less than the `qty` or
-//       should we just refuse the transfer ?
+/**
+ *
+ */
 int Hospital::send(ItemType it, int qty, int bill) {
     // TODO
     assert(it == ItemType::PatientSick);
+
+    mutex.lock();
+
+    int price = getCostPerUnit(it) * qty;
+    if (money < price) {
+        return 0;
+    }
 
     int availableBeds = maxBeds - currentBeds;
     int takes = std::min(qty, availableBeds);
@@ -93,8 +126,9 @@ int Hospital::send(ItemType it, int qty, int bill) {
     currentBeds += takes;
     nbHospitalised += takes;
 
-    int price = getCostPerUnit(it) * qty;
     money -= price;
+
+    mutex.unlock();
 
     return price;
 }

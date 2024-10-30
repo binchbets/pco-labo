@@ -7,7 +7,7 @@
 IWindowInterface* Clinic::interface = nullptr;
 
 Clinic::Clinic(int uniqueId, int fund, std::vector<ItemType> resourcesNeeded)
-    : Seller(fund, uniqueId), nbTreated(0), resourcesNeeded(resourcesNeeded)
+    : Seller(fund, uniqueId), nbTreated(0), resourcesNeeded(resourcesNeeded), mutex()
 {
     interface->updateFund(uniqueId, fund);
     interface->consoleAppendText(uniqueId, "Clinic created");
@@ -26,10 +26,22 @@ bool Clinic::verifyResources() {
     return true;
 }
 
-// Returns healed patients
-int Clinic::request(ItemType what, int qty){
-    assert(what == ItemType::PatientHealed);
+/**
+ * Returns healed patients to hospitals
+ */
+int Clinic::request(ItemType what, int qty) {
     // TODO
+    assert(what == ItemType::PatientHealed);
+
+    if (qty < 1) {
+        return 0;
+    }
+
+    if (stocks[what] < qty) {
+        return 0;
+    }
+
+    mutex.lock();
 
     // Get the number of healed patient we can transfer. We cannot transfer more that the current number of healed
     // patient in the clinic.
@@ -41,6 +53,8 @@ int Clinic::request(ItemType what, int qty){
     int price = getCostPerUnit(what) * qty;
     money += price;
 
+    mutex.unlock();
+
     return price;
 }
 
@@ -49,6 +63,8 @@ void Clinic::treatPatient() {
 
     ItemType item1 = resourcesNeeded[1];
     ItemType item2 = resourcesNeeded[2];
+
+    mutex.lock();
 
     // We probably don't have to check if we have the items needed to treat a new patient as `treatPatient()` is only
     // called if we have the required items in stock.
@@ -63,24 +79,32 @@ void Clinic::treatPatient() {
     stocks[ItemType::PatientHealed]++;
     nbTreated++;
 
+    mutex.unlock();
+
     interface->consoleAppendText(uniqueId, "Clinic have healed a new patient");
 }
 
 void Clinic::orderResources() {
     // TODO
+    mutex.lock();
+
     Seller* hospital = chooseRandomSeller(hospitals);
     if (hospital->request(ItemType::PatientSick, 1)) {
         stocks[ItemType::PatientSick]++;
         money -= getCostPerUnit(ItemType::PatientSick) * 1;
     }
 
-   for (auto& supplier : suppliers) {
-       for (auto& item : resourcesNeeded) {
-           if (supplier->request(item, 1)) {
-               stocks[item]++;
-           }
-       }
-   }
+    // We order one of each needed resources. We do not perform any checks to see which ones we have in stocks and
+    // we do not need to order.
+    for (auto& supplier : suppliers) {
+        for (auto& item : resourcesNeeded) {
+            if (supplier->request(item, 1)) {
+                stocks[item]++;
+            }
+        }
+    }
+
+    mutex.unlock();
 }
 
 void Clinic::run() {
