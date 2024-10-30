@@ -27,23 +27,25 @@ int Hospital::request(ItemType what, int qty) {
     // The method documentation talks about either requesting sick or healed patient.
     assert(what == ItemType::PatientSick || what == ItemType::PatientHealed);
 
+    if (qty < 1) {
+        return 0;
+    }
+
     if (stocks[what] < qty) {
         return 0;
     }
 
     mutex.lock();
 
-    int currentSickPatients = nbHospitalised - nbFree;
-    int takes = std::min(currentSickPatients, qty);
-    nbHospitalised -= takes;
-    stocks[ItemType::PatientSick] -= takes;
-    currentBeds -= takes;
+    stocks[ItemType::PatientSick] -= qty;
+    currentBeds -= qty;
 
-    money += getCostPerUnit(what) * qty;
+    int price = getCostPerUnit(what) * qty;
+    money += price;
 
     mutex.unlock();
 
-    return takes;
+    return price;
 }
 
 void Hospital::freeHealedPatient() {
@@ -92,15 +94,15 @@ void Hospital::transferPatientsFromClinic() {
 
     mutex.lock();
 
-    int credit = clinic->request(ItemType::PatientHealed, quantity);
-    if (credit) {
+    int debit = clinic->request(ItemType::PatientHealed, quantity);
+    if (debit) {
         stocks[ItemType::PatientHealed] += quantity;
         currentBeds += quantity;
         nbHospitalised += quantity;
 
         patientsToFree.at(patientsToFree.size() - 1) = quantity;
 
-        money -= credit;
+        money -= debit;
     }
 
     mutex.unlock();

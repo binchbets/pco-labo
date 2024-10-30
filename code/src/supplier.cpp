@@ -19,7 +19,7 @@ Supplier::Supplier(int uniqueId, int fund, std::vector<ItemType> resourcesSuppli
 
 int Supplier::request(ItemType it, int qty) {
     // TODO
-    assert(it != ItemType::Syringe || it != ItemType::Pill || it != ItemType::Scalpel || it != ItemType::Thermometer || it != ItemType::Stethoscope);
+    assert(it == ItemType::Syringe || it == ItemType::Pill  || it == ItemType::Scalpel || it == ItemType::Thermometer || it == ItemType::Stethoscope);
 
     if (qty < 1) {
         return 0;

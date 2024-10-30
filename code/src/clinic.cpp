@@ -43,12 +43,8 @@ int Clinic::request(ItemType what, int qty) {
 
     mutex.lock();
 
-    // Get the number of healed patient we can transfer. We cannot transfer more that the current number of healed
-    // patient in the clinic.
-    int transferredQuantity = std::min(qty, stocks[ItemType::PatientHealed]);
-
     // We remove the number of patient we transfer from the clinic stock
-    stocks[ItemType::PatientHealed] -= transferredQuantity;
+    stocks[what] -= qty;
 
     int price = getCostPerUnit(what) * qty;
     money += price;
@@ -79,6 +75,8 @@ void Clinic::treatPatient() {
     stocks[ItemType::PatientHealed]++;
     nbTreated++;
 
+    money -= getEmployeeSalary(getEmployeeThatProduces(ItemType::PatientHealed));
+
     mutex.unlock();
 
     interface->consoleAppendText(uniqueId, "Clinic have healed a new patient");
@@ -86,20 +84,29 @@ void Clinic::treatPatient() {
 
 void Clinic::orderResources() {
     // TODO
+    const int quantity = 1;
+
     mutex.lock();
 
-    Seller* hospital = chooseRandomSeller(hospitals);
-    if (hospital->request(ItemType::PatientSick, 1)) {
-        stocks[ItemType::PatientSick]++;
-        money -= getCostPerUnit(ItemType::PatientSick) * 1;
+    {
+        Seller* hospital = chooseRandomSeller(hospitals);
+        int price = hospital->request(ItemType::PatientSick, quantity);
+        if (price) {
+            stocks[ItemType::PatientSick] += quantity;
+            money -= price;
+        }
     }
 
     // We order one of each needed resources. We do not perform any checks to see which ones we have in stocks and
     // we do not need to order.
     for (auto& supplier : suppliers) {
-        for (auto& item : resourcesNeeded) {
-            if (supplier->request(item, 1)) {
-                stocks[item]++;
+        // We have to skip the first resource as it is ItemType::PatientSick
+        for (int i = 1; i < resourcesNeeded.size(); i++) {
+            auto item = resourcesNeeded[i];
+            int price = supplier->request(item, quantity);
+            if (price) {
+                stocks[item] += quantity;
+                money -= price;
             }
         }
     }
