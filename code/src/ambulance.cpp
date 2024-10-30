@@ -21,15 +21,19 @@ Ambulance::Ambulance(int uniqueId, int fund, std::vector<ItemType> resourcesSupp
 }
 
 void Ambulance::sendPatient(){
+    const int quantity = 1;
+
     if (stocks[ItemType::PatientSick] == 0) {
         // We do not have any more patients to send to the hospitals
         return;
     }
 
     Seller* hospital = chooseRandomSeller(hospitals);
-    if (hospital->send(ItemType::PatientSick, 1, TRANSFER_COST)) {
-        stocks[ItemType::PatientSick]--;
-        nbTransfer++;
+    int credit = hospital->send(ItemType::PatientSick, quantity, TRANSFER_COST);
+    if (credit) {
+        stocks[ItemType::PatientSick] -= quantity;
+        nbTransfer += quantity;
+        money += credit;
     }
 }
 

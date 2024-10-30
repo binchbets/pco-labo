@@ -29,6 +29,8 @@ int Hospital::request(ItemType what, int qty) {
     stocks[ItemType::PatientSick] -= takes;
     currentBeds -= takes;
 
+    money += getCostPerUnit(what) * qty;
+
     return takes;
 }
 
@@ -50,6 +52,8 @@ void Hospital::freeHealedPatient() {
 }
 
 void Hospital::transferPatientsFromClinic() {
+    const int quantity = 1;
+
     // TODO
     Seller* clinic = chooseRandomSeller(clinics);
 
@@ -58,13 +62,21 @@ void Hospital::transferPatientsFromClinic() {
         return;
     }
 
-    int quantity = 1;
-    if (clinic->request(ItemType::PatientHealed, quantity)) {
+    // If we do not have the funds available to get healed patients from clinic we do not transfer them.
+    int price = getCostPerUnit(ItemType::PatientHealed) * quantity;
+    if (money < price) {
+        return;
+    }
+
+    int credit = clinic->request(ItemType::PatientHealed, quantity);
+    if (credit) {
         stocks[ItemType::PatientHealed] += quantity;
         currentBeds += quantity;
         nbHospitalised += quantity;
 
         patientsToFree.at(patientsToFree.size() - 1) = quantity;
+
+        money -= credit;
     }
 }
 
@@ -81,7 +93,10 @@ int Hospital::send(ItemType it, int qty, int bill) {
     currentBeds += takes;
     nbHospitalised += takes;
 
-    return takes;
+    int price = getCostPerUnit(it) * qty;
+    money -= price;
+
+    return price;
 }
 
 void Hospital::run()

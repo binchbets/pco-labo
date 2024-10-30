@@ -38,8 +38,10 @@ int Clinic::request(ItemType what, int qty){
     // We remove the number of patient we transfer from the clinic stock
     stocks[ItemType::PatientHealed] -= transferredQuantity;
 
-    // TODO(alexandre): What should we return here ?
-    return transferredQuantity;
+    int price = getCostPerUnit(what) * qty;
+    money += price;
+
+    return price;
 }
 
 void Clinic::treatPatient() {
@@ -69,6 +71,7 @@ void Clinic::orderResources() {
     Seller* hospital = chooseRandomSeller(hospitals);
     if (hospital->request(ItemType::PatientSick, 1)) {
         stocks[ItemType::PatientSick]++;
+        money -= getCostPerUnit(ItemType::PatientSick) * 1;
     }
 
    for (auto& supplier : suppliers) {
