@@ -4,7 +4,7 @@
 #include <cassert>
 #include <pcosynchro/pcothread.h>
 
-IWindowInterface* Hospital::interface = nullptr;
+IWindowInterface *Hospital::interface = nullptr;
 
 Hospital::Hospital(int uniqueId, int fund, int maxBeds)
     : Seller(fund, uniqueId), maxBeds(maxBeds), currentBeds(0), nbHospitalised(0), nbFree(0), mutex()
@@ -12,26 +12,29 @@ Hospital::Hospital(int uniqueId, int fund, int maxBeds)
     interface->updateFund(uniqueId, fund);
     interface->consoleAppendText(uniqueId, "Hospital Created with " + QString::number(maxBeds) + " beds");
 
-    std::vector<ItemType> initialStocks = { ItemType::PatientHealed, ItemType::PatientSick };
+    std::vector<ItemType> initialStocks = {ItemType::PatientHealed, ItemType::PatientSick};
 
-    for(const auto& item : initialStocks) {
+    for (const auto &item : initialStocks)
+    {
         stocks[item] = 0;
     }
 }
 
-
 /**
  * Transfers patient out of the hospital (into clinics)
  */
-int Hospital::request(ItemType what, int qty) {
+int Hospital::request(ItemType what, int qty)
+{
     // The method documentation talks about either requesting sick or healed patient.
     assert(what == ItemType::PatientSick || what == ItemType::PatientHealed);
 
-    if (qty < 1) {
+    if (qty < 1)
+    {
         return 0;
     }
 
-    if (stocks[what] < qty) {
+    if (stocks[what] < qty)
+    {
         return 0;
     }
 
@@ -48,7 +51,8 @@ int Hospital::request(ItemType what, int qty) {
     return price;
 }
 
-void Hospital::freeHealedPatient() {
+void Hospital::freeHealedPatient()
+{
     // TODO
     mutex.lock();
 
@@ -61,7 +65,8 @@ void Hospital::freeHealedPatient() {
      * We shift the position of patients to free to the left as we handled the release of patient
      * for the day.
      */
-    for (size_t i = patientsToFree.size() -1; i > 0; i--) {
+    for (size_t i = patientsToFree.size() - 1; i > 0; i--)
+    {
         patientsToFree[i - 1] = patientsToFree[i];
     }
     patientsToFree.back() = 0;
@@ -75,27 +80,31 @@ void Hospital::freeHealedPatient() {
 /**
  * Gets patients from clinic back into the hospital
  */
-void Hospital::transferPatientsFromClinic() {
+void Hospital::transferPatientsFromClinic()
+{
     const int quantity = 1;
 
     // TODO
-    Seller* clinic = chooseRandomSeller(clinics);
+    Seller *clinic = chooseRandomSeller(clinics);
 
-    if (currentBeds >= maxBeds) {
+    if (currentBeds >= maxBeds)
+    {
         // We cannot accept any healed patients as we don't have any free beds.
         return;
     }
 
     // If we do not have the funds available to get healed patients from clinic we do not transfer them.
     int price = getCostPerUnit(ItemType::PatientHealed) * quantity;
-    if (money < price) {
+    if (money < price)
+    {
         return;
     }
 
     mutex.lock();
 
     int debit = clinic->request(ItemType::PatientHealed, quantity);
-    if (debit) {
+    if (debit)
+    {
         stocks[ItemType::PatientHealed] += quantity;
         currentBeds += quantity;
         nbHospitalised += quantity;
@@ -111,24 +120,26 @@ void Hospital::transferPatientsFromClinic() {
 /**
  *
  */
-int Hospital::send(ItemType it, int qty, int bill) {
-    // TODO
+int Hospital::send(ItemType it, int qty, int bill)
+{
     assert(it == ItemType::PatientSick);
 
     mutex.lock();
 
     int price = getCostPerUnit(it) * qty;
-    if (money < price) {
+    int availableBeds = maxBeds - currentBeds;
+    if (money < price || availableBeds < qty)
+    {
         return 0;
     }
 
-    int availableBeds = maxBeds - currentBeds;
-    int takes = std::min(qty, availableBeds);
-    stocks[ItemType::PatientSick] += takes;
-    currentBeds += takes;
-    nbHospitalised += takes;
+    interface->consoleAppendText(uniqueId, "Hospital has received " + QString::number(qty) + " patients");
 
-    money -= price;
+    stocks[ItemType::PatientSick] += qty;
+    currentBeds += qty;
+    nbHospitalised += qty;
+
+    money -= price + getEmployeeSalary(EmployeeType::Nurse);
 
     mutex.unlock();
 
@@ -137,14 +148,16 @@ int Hospital::send(ItemType it, int qty, int bill) {
 
 void Hospital::run()
 {
-    if (clinics.empty()) {
+    if (clinics.empty())
+    {
         std::cerr << "You have to give clinics to a hospital before launching is routine" << std::endl;
         return;
     }
 
     interface->consoleAppendText(uniqueId, "[START] Hospital routine");
 
-    while (!PcoThread::thisThread()->stopRequested()) {
+    while (!PcoThread::thisThread()->stopRequested())
+    {
         transferPatientsFromClinic();
 
         freeHealedPatient();
@@ -157,11 +170,13 @@ void Hospital::run()
     interface->consoleAppendText(uniqueId, "[STOP] Hospital routine");
 }
 
-int Hospital::getAmountPaidToWorkers() {
+int Hospital::getAmountPaidToWorkers()
+{
     return nbHospitalised * getEmployeeSalary(EmployeeType::Nurse);
 }
 
-int Hospital::getNumberPatients(){
+int Hospital::getNumberPatients()
+{
     return stocks[ItemType::PatientSick] + stocks[ItemType::PatientHealed] + nbFree;
 }
 
@@ -170,14 +185,17 @@ std::map<ItemType, int> Hospital::getItemsForSale()
     return stocks;
 }
 
-void Hospital::setClinics(std::vector<Seller*> clinics){
+void Hospital::setClinics(std::vector<Seller *> clinics)
+{
     this->clinics = clinics;
 
-    for (Seller* clinic : clinics) {
+    for (Seller *clinic : clinics)
+    {
         interface->setLink(uniqueId, clinic->getUniqueId());
     }
 }
 
-void Hospital::setInterface(IWindowInterface* windowInterface){
+void Hospital::setInterface(IWindowInterface *windowInterface)
+{
     interface = windowInterface;
 }
