@@ -71,7 +71,8 @@ void Clinic::treatPatient()
     // called if we have the required items in stock.
     if (stocks[item1] == 0 ||
         stocks[item2] == 0 ||
-        stocks[ItemType::PatientSick] == 0)
+        stocks[ItemType::PatientSick] == 0 ||
+        money < getEmployeeSalary(getEmployeeThatProduces(ItemType::PatientHealed)))
     {
 
         mutex.unlock();

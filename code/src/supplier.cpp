@@ -57,6 +57,7 @@ void Supplier::run()
         if (money >= supplierCost)
         {
             isProducing = true;
+            money -= supplierCost;
         }
 
         /* Temps aléatoire borné qui simule l'attente du travail fini*/
