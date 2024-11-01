@@ -35,7 +35,6 @@ bool Clinic::verifyResources()
  */
 int Clinic::request(ItemType what, int qty)
 {
-    // TODO
     assert(what == ItemType::PatientHealed);
 
     if (qty < 1)
@@ -52,7 +51,6 @@ int Clinic::request(ItemType what, int qty)
 
     // We remove the number of patient we transfer from the clinic stock
     stocks[what] -= qty;
-
     int price = getCostPerUnit(what) * qty;
     money += price;
 
@@ -90,9 +88,9 @@ void Clinic::treatPatient()
     // TODO
     stocks[ItemType::PatientSick]--;
     stocks[ItemType::PatientHealed]++;
-    nbTreated++;
 
     money -= getEmployeeSalary(getEmployeeThatProduces(ItemType::PatientHealed));
+    nbTreated++;
 
     mutex.unlock();
 

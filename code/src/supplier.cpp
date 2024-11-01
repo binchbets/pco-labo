@@ -56,7 +56,6 @@ void Supplier::run()
         bool isProducing = false;
         if (money >= supplierCost)
         {
-            money -= supplierCost;
             isProducing = true;
         }
 

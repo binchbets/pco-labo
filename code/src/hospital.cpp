@@ -53,7 +53,6 @@ int Hospital::request(ItemType what, int qty)
 
 void Hospital::freeHealedPatient()
 {
-    // TODO
     mutex.lock();
 
     int toFree = patientsToFree.front();
@@ -70,9 +69,6 @@ void Hospital::freeHealedPatient()
         patientsToFree[i - 1] = patientsToFree[i];
     }
     patientsToFree.back() = 0;
-
-    // As discussed, the hospital gets money each time a patient is transferred out of the hospital.
-    money += getCostPerUnit(ItemType::PatientHealed) * toFree;
 
     mutex.unlock();
 }
@@ -130,6 +126,7 @@ int Hospital::send(ItemType it, int qty, int bill)
     int availableBeds = maxBeds - currentBeds;
     if (money < price || availableBeds < qty)
     {
+        mutex.unlock();
         return 0;
     }
 
