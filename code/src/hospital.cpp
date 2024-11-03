@@ -83,9 +83,15 @@ void Hospital::transferPatientsFromClinic()
     // TODO
     Seller *clinic = chooseRandomSeller(clinics);
 
+    // We have to lock before the price check as we might receive patients from an ambulance concurrently, which would
+    // invalidate our funds validation as money has been deduced to pay nurses when a patient has been transfered from
+    // an ambulance
+    mutex.lock();
+
     if (currentBeds >= maxBeds)
     {
         // We cannot accept any healed patients as we don't have any free beds.
+        mutex.unlock();
         return;
     }
 
@@ -93,10 +99,10 @@ void Hospital::transferPatientsFromClinic()
     int price = getCostPerUnit(ItemType::PatientHealed) * quantity;
     if (money < price)
     {
+        mutex.unlock();
         return;
     }
 
-    mutex.lock();
 
     int debit = clinic->request(ItemType::PatientHealed, quantity);
     if (debit)
