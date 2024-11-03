@@ -26,7 +26,7 @@ Hospital::Hospital(int uniqueId, int fund, int maxBeds)
 int Hospital::request(ItemType what, int qty)
 {
     // The method documentation talks about either requesting sick or healed patient.
-    assert(what == ItemType::PatientSick || what == ItemType::PatientHealed);
+    assert(what == ItemType::PatientSick);
 
     if (qty < 1)
     {
@@ -96,7 +96,9 @@ void Hospital::transferPatientsFromClinic()
     }
 
     // If we do not have the funds available to get healed patients from clinic we do not transfer them.
+    // We also have to take into account the nurse's salary.
     int price = getCostPerUnit(ItemType::PatientHealed) * quantity;
+    price += getEmployeeSalary(EmployeeType::Nurse);
     if (money < price)
     {
         mutex.unlock();
@@ -114,6 +116,7 @@ void Hospital::transferPatientsFromClinic()
         patientsToFree.at(patientsToFree.size() - 1) = quantity;
 
         money -= debit;
+        money -= getEmployeeSalary(EmployeeType::Nurse);
     }
 
     mutex.unlock();
@@ -129,6 +132,7 @@ int Hospital::send(ItemType it, int qty, int bill)
     mutex.lock();
 
     int price = getCostPerUnit(it) * qty;
+    price += getEmployeeSalary(EmployeeType::Nurse);
     int availableBeds = maxBeds - currentBeds;
     if (money < price || availableBeds < qty)
     {
@@ -142,11 +146,11 @@ int Hospital::send(ItemType it, int qty, int bill)
     currentBeds += qty;
     nbHospitalised += qty;
 
-    money -= price + getEmployeeSalary(EmployeeType::Nurse);
+    money -= price;
 
     mutex.unlock();
 
-    return price;
+    return getCostPerUnit(it) * qty;
 }
 
 void Hospital::run()

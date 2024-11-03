@@ -61,14 +61,13 @@ int Clinic::request(ItemType what, int qty)
 
 void Clinic::treatPatient()
 {
+    // TODO
+
+    mutex.lock();
 
     ItemType item1 = resourcesNeeded[1];
     ItemType item2 = resourcesNeeded[2];
 
-    mutex.lock();
-
-    // We probably don't have to check if we have the items needed to treat a new patient as `treatPatient()` is only
-    // called if we have the required items in stock.
     if (stocks[item1] == 0 ||
         stocks[item2] == 0 ||
         stocks[ItemType::PatientSick] == 0 ||
@@ -86,7 +85,6 @@ void Clinic::treatPatient()
     // Temps simulant un traitement
     interface->simulateWork();
 
-    // TODO
     stocks[ItemType::PatientSick]--;
     stocks[ItemType::PatientHealed]++;
 
