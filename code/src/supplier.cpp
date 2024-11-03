@@ -50,29 +50,30 @@ void Supplier::run()
     interface->consoleAppendText(uniqueId, "[START] Supplier routine");
     while (!PcoThread::thisThread()->stopRequested())
     {
-        // TODO: Do we need this mutex ?
-        mutex.lock();
 
         ItemType resourceSupplied = getRandomItemFromStock();
         int supplierCost = getEmployeeSalary(getEmployeeThatProduces(resourceSupplied));
         // TODO
         bool isProducing = false;
+
+        mutex.lock();
         if (money >= supplierCost)
         {
             isProducing = true;
             money -= supplierCost;
         }
+        mutex.unlock();
 
         /* Temps aléatoire borné qui simule l'attente du travail fini*/
         interface->simulateWork();
         // TODO
 
+        mutex.lock();
         if (isProducing)
         {
             stocks[resourceSupplied]++;
             nbSupplied++;
         }
-
         mutex.unlock();
 
         interface->updateFund(uniqueId, money);
