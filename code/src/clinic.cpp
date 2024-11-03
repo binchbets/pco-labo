@@ -42,12 +42,13 @@ int Clinic::request(ItemType what, int qty)
         return 0;
     }
 
+    mutex.lock();
+
     if (stocks[what] < qty)
     {
+        mutex.unlock();
         return 0;
     }
-
-    mutex.lock();
 
     // We remove the number of patient we transfer from the clinic stock
     stocks[what] -= qty;
@@ -63,10 +64,10 @@ void Clinic::treatPatient()
 {
     // TODO
 
-    mutex.lock();
-
     ItemType item1 = resourcesNeeded[1];
     ItemType item2 = resourcesNeeded[2];
+
+    mutex.lock();
 
     if (stocks[item1] == 0 ||
         stocks[item2] == 0 ||

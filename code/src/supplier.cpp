@@ -27,13 +27,14 @@ int Supplier::request(ItemType it, int qty)
         return 0;
     }
 
+    mutex.lock();
+
     if (stocks[it] < qty)
     {
         // We do not have enough items in stock.
+        mutex.unlock();
         return 0;
     }
-
-    mutex.lock();
 
     stocks[it] -= qty;
     int price = qty * getCostPerUnit(it);
@@ -49,6 +50,8 @@ void Supplier::run()
     interface->consoleAppendText(uniqueId, "[START] Supplier routine");
     while (!PcoThread::thisThread()->stopRequested())
     {
+        // TODO: Do we need this mutex ?
+        mutex.lock();
 
         ItemType resourceSupplied = getRandomItemFromStock();
         int supplierCost = getEmployeeSalary(getEmployeeThatProduces(resourceSupplied));
@@ -69,6 +72,8 @@ void Supplier::run()
             stocks[resourceSupplied]++;
             nbSupplied++;
         }
+
+        mutex.unlock();
 
         interface->updateFund(uniqueId, money);
         interface->updateStock(uniqueId, &stocks);

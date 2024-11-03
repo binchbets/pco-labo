@@ -33,12 +33,13 @@ int Hospital::request(ItemType what, int qty)
         return 0;
     }
 
+    mutex.lock();
+
     if (stocks[what] < qty)
     {
+        mutex.unlock();
         return 0;
     }
-
-    mutex.lock();
 
     stocks[ItemType::PatientSick] -= qty;
     currentBeds -= qty;
@@ -83,9 +84,9 @@ void Hospital::transferPatientsFromClinic()
     // TODO
     Seller *clinic = chooseRandomSeller(clinics);
 
-    // We have to lock before the price check as we might receive patients from an ambulance concurrently, which would
-    // invalidate our funds validation as money has been deduced to pay nurses when a patient has been transfered from
-    // an ambulance
+    // We have to lock before the price check as we might receive patients from an ambulance at the same time we call
+    // this method, which would invalidate our funds validation as money has been deduced to pay nurses when a patient
+    // has been transferred from an ambulance.
     mutex.lock();
 
     if (currentBeds >= maxBeds)
