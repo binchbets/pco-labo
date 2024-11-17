@@ -14,7 +14,7 @@ void LocomotiveBehavior::run()
     loco.demarrer();
     loco.afficherMessage("Ready!");
 
-    while (true)
+    while (!PcoThread::thisThread()->stopRequested())
     {
         attendre_contact(beforeSharedSectionContactId);
         sharedSection->access(loco);
