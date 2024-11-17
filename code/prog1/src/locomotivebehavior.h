@@ -21,7 +21,7 @@ public:
      * \brief locomotiveBehavior Constructeur de la classe
      * \param loco la locomotive dont on représente le comportement
      */
-    LocomotiveBehavior(Locomotive& loco, std::shared_ptr<SharedSectionInterface> sharedSection, int stationId /*, autres paramètres éventuels */) : loco(loco), sharedSection(sharedSection), stationId(stationId) {
+    LocomotiveBehavior(Locomotive& loco, std::shared_ptr<SharedSectionInterface> sharedSection, int stationId /*, autres paramètres éventuels */) : loco(loco), sharedSection(sharedSection), requestContactId(stationId) {
         // Eventuel code supplémentaire du constructeur
     }
 
@@ -58,10 +58,7 @@ protected:
      */
 
 private:
-    /**
-     * @breif stationId represents a point on the tracks that the train treats as a stop.
-     */
-     int stationId;
+     int requestContactId;
 };
 
 #endif // LOCOMOTIVEBEHAVIOR_H

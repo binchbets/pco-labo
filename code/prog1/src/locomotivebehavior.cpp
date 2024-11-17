@@ -26,9 +26,9 @@ void LocomotiveBehavior::run()
 
         // This only tells us the train has hit the contact. We must now tell trains apart to know which one hit which
         // contact
-        attendre_contact(stationId);
+        attendre_contact(requestContactId);
 
-        loco.afficherMessage(QString::fromStdString("J'ai atteint le contact " + std::to_string(stationId)));
+        loco.afficherMessage(QString::fromStdString("J'ai atteint le contact " + std::to_string(requestContactId)));
     }
 }
 

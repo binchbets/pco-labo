@@ -58,12 +58,12 @@ int cmain()
     diriger_aiguillage(6,  TOUT_DROIT, 0);
     diriger_aiguillage(7,  TOUT_DROIT, 0);
     diriger_aiguillage(8,  DEVIE     , 0);
-    diriger_aiguillage(9,  DEVIE     , 0);
-    diriger_aiguillage(10, TOUT_DROIT, 0);
+    diriger_aiguillage(9,  TOUT_DROIT, 0);
+    diriger_aiguillage(10, DEVIE     , 0);
     diriger_aiguillage(11, TOUT_DROIT, 0);
     diriger_aiguillage(12, TOUT_DROIT, 0);
-    diriger_aiguillage(13, TOUT_DROIT, 0);
-    diriger_aiguillage(14, DEVIE     , 0);
+    diriger_aiguillage(13, DEVIE     , 0);
+    diriger_aiguillage(14, TOUT_DROIT, 0);
     diriger_aiguillage(15, DEVIE     , 0);
     diriger_aiguillage(16, TOUT_DROIT, 0);
     diriger_aiguillage(17, TOUT_DROIT, 0);
@@ -99,8 +99,15 @@ int cmain()
      * Threads des locos *
      ********************/
 
+    std::vector<std::tuple<int, int, int>> switchingOperations{};
+    // train id, switch id, direction
+    switchingOperations.emplace_back(7, 13, TOUT_DROIT);
+    switchingOperations.emplace_back(42, 13, DEVIE);
+    switchingOperations.emplace_back(7, 10, TOUT_DROIT);
+    switchingOperations.emplace_back(42, 10, DEVIE);
+
     // Création de la section partagée
-    std::shared_ptr<SharedSectionInterface> sharedSection = std::make_shared<SharedSection>();
+    std::shared_ptr<SharedSectionInterface> sharedSection = std::make_shared<SharedSection>(switchingOperations);
 
     // Création du thread pour la loco 0
     std::unique_ptr<Launchable> locoBehaveA = std::make_unique<LocomotiveBehavior>(locoA, sharedSection, 1 /*, autres paramètres ...*/);

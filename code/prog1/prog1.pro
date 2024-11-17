@@ -13,6 +13,7 @@ HEADERS +=  \
     src/locomotivebehavior.h \
     src/sharedsection.h
     src/sharedstation.h
+    src/railroute.h
 
 SOURCES +=  \
     src/sharedstation.cpp \
@@ -20,3 +21,4 @@ SOURCES +=  \
     src/cppmain.cpp \
     src/locomotivebehavior.cpp
     src/sharedstation.cpp
+    src/railroute.cpp
