@@ -29,6 +29,7 @@ public:
     SharedSection(std::vector<std::tuple<int, int, int>> &switchingOperations) :
             switchingOperations(switchingOperations),
             isOccupied(false),
+            isWaiting(false),
             isOccupiedMutex(1),
             lockUntilFree(0) {
         // TODO
@@ -48,6 +49,8 @@ public:
         isOccupiedMutex.acquire();
         if (isOccupied) {
             loco.arreter();
+
+            isWaiting = true;
 
             isOccupiedMutex.release();
 
@@ -73,12 +76,16 @@ public:
      */
     void leave(Locomotive &loco) override {
         // TODO
-
         isOccupiedMutex.acquire();
         isOccupied = false;
+
+        if (isWaiting) {
+            lockUntilFree.release();
+        }
+        isWaiting = false;
+
         isOccupiedMutex.release();
 
-        lockUntilFree.release();
 
         afficher_message(qPrintable(QString("The engine no. %1 leaves the shared section.").arg(loco.numero())));
     }
@@ -97,7 +104,9 @@ private:
      * Tells us whether or not the shared section is occupied
      */
     bool isOccupied;
+    bool isWaiting;
     PcoSemaphore isOccupiedMutex;
+
 
     /**
      * Locks the caller of access (LocomotiveBehavior) until the shared section is free
