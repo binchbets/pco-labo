@@ -10,6 +10,7 @@
 #include "locomotivebehavior.h"
 #include "sharedsectioninterface.h"
 #include "sharedsection.h"
+#include <random>
 
 // Locomotives :
 // Vous pouvez changer les vitesses initiales, ou utiliser la fonction loco.fixerVitesse(vitesse);
@@ -109,14 +110,19 @@ int cmain()
     // Création de la section partagée
     std::shared_ptr<SharedSectionInterface> sharedSection = std::make_shared<SharedSection>(switchingOperations);
 
+    // Setup random number generator
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_int_distribution<> dist(1, 10);
+
     // Création du thread pour la loco 0
     std::unique_ptr<Launchable> locoBehaveA = std::make_unique<LocomotiveBehavior>(
-        locoA, sharedSection, 5, 25, 15, 10,
+        locoA, sharedSection, 5, 25, 15, dist(gen),
         std::vector<SwitchSetup>{{14, TOUT_DROIT}, {13, DEVIE}, {10, DEVIE}, {9, TOUT_DROIT}}
     );
     // Création du thread pour la loco 1
     std::unique_ptr<Launchable> locoBehaveB = std::make_unique<LocomotiveBehavior>(
-        locoB, sharedSection, 30, 21, 12, 10,
+        locoB, sharedSection, 30, 21, 12, dist(gen),
         std::vector<SwitchSetup>{{16, TOUT_DROIT}, {13, TOUT_DROIT}, {10, TOUT_DROIT}, {7, TOUT_DROIT}}
     );
 
