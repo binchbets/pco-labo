@@ -54,4 +54,4 @@ else()
     target_link_libraries(PCO_LAB04_prog1 PRIVATE Qt6::Core Qt6::Gui Qt6::Widgets Qt6::PrintSupport Qt6::Core5Compat qtrainsim -lpcosynchro)
 endif()
 
-file(COPY ../../QtrainSim/data DESTINATION ${CMAKE_BINARY_DIR}/code_student/prog1)
+file(COPY ../../QtrainSim/data DESTINATION ${CMAKE_BINARY_DIR}/code/prog1)

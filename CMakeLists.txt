@@ -6,3 +6,5 @@ set(CMAKE_AUTOUIC ON)
 
 add_subdirectory(QtrainSim)
 add_subdirectory(code)
+
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
