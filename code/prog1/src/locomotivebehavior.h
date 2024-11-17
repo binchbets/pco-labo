@@ -12,6 +12,7 @@
 #include "locomotive.h"
 #include "launchable.h"
 #include "sharedsectioninterface.h"
+#include "pcosynchro/pcosemaphore.h"
 
 struct SwitchSetup {
     int switchNumber;
@@ -93,9 +94,24 @@ private:
     std::vector<SwitchSetup> switchSetups;
 
     /**
-     *
+     * The number of times the train has to pass over his station before turning around.
      */
     const int turnAroundCount;
+
+    /**
+     * This semaphore is used to wait on the other train when waiting at the station.
+     */
+    static PcoSemaphore releaseAtStation;
+
+    /**
+     * Tells us whether or not we should wait at the station (whether we are the first train waiting or not)
+     */
+    static bool waitAtStation;
+
+    /**
+     * This mutex protects `waitAtStation`.
+     */
+    static PcoSemaphore waitAtStationMutex;
 };
 
 #endif // LOCOMOTIVEBEHAVIOR_H
