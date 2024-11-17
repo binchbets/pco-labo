@@ -30,7 +30,7 @@ public:
             switchingOperations(switchingOperations),
             isOccupied(false),
             isOccupiedMutex(1),
-            lockUntilFree(1) {
+            lockUntilFree(0) {
         // TODO
     }
 
@@ -50,19 +50,17 @@ public:
             loco.arreter();
 
             isOccupiedMutex.release();
-            lockUntilFree.acquire();
-
 
             afficher_message(qPrintable(QString("The train no. %1 is waiting at the shared section.").arg(loco.numero())));
+
+            lockUntilFree.acquire();
+
+            loco.demarrer();
+
+            afficher_message(qPrintable(QString("The train no. %1 was release and can proceed to the shared section").arg(loco.numero())));
         } else {
             isOccupied = true;
             isOccupiedMutex.release();
-
-            for (auto& op : switchingOperations) {
-                if (std::get<0>(op) == loco.numero()) {
-                    diriger_aiguillage(std::get<1>(op),  std::get<2>(op), 0);
-                }
-            }
 
             afficher_message(qPrintable(QString("The train no. %1 accesses the shared section.").arg(loco.numero())));
         }
@@ -82,7 +80,6 @@ public:
 
         lockUntilFree.release();
 
-        // Exemple de message dans la console globale
         afficher_message(qPrintable(QString("The engine no. %1 leaves the shared section.").arg(loco.numero())));
     }
 

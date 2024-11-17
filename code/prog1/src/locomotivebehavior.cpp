@@ -14,21 +14,22 @@ void LocomotiveBehavior::run()
     loco.demarrer();
     loco.afficherMessage("Ready!");
 
-    /* A vous de jouer ! */
-
-    // Vous pouvez appeler les méthodes de la section partagée comme ceci :
-    //sharedSection->access(loco);
-    //sharedSection->leave(loco);
-
     while(true) {
-        // On attend qu'une locomotive arrive sur le contact 1.
-        // Pertinent de faire ça dans les deux threads? Pas sûr...
+        attendre_contact(beforeSharedSectionContactId);
+        sharedSection->access(loco);
 
-        // This only tells us the train has hit the contact. We must now tell trains apart to know which one hit which
-        // contact
-        attendre_contact(requestContactId);
+        attendre_contact(afterSharedSectionContactId);
+        sharedSection->leave(loco);
 
-        loco.afficherMessage(QString::fromStdString("J'ai atteint le contact " + std::to_string(requestContactId)));
+        // Get to the station
+        attendre_contact(stationContactId);
+
+        stationReachedCount++;
+        if (stationReachedCount % turnAroundCount == 0) {
+            loco.inverserSens();
+        }
+
+        loco.afficherMessage(QString::fromStdString("J'ai atteint le contact " + std::to_string(stationContactId)));
     }
 }
 
