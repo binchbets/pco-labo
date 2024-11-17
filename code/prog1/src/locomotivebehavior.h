@@ -7,26 +7,38 @@
 #ifndef LOCOMOTIVEBEHAVIOR_H
 #define LOCOMOTIVEBEHAVIOR_H
 
+#include <utility>
+
 #include "locomotive.h"
 #include "launchable.h"
 #include "sharedsectioninterface.h"
 
+struct SwitchSetup
+{
+ int switchNumber;
+ int switchDirection;
+};
+
 /**
  * @brief La classe LocomotiveBehavior représente le comportement d'une locomotive
  */
-class LocomotiveBehavior : public Launchable {
+class LocomotiveBehavior : public Launchable
+{
 public:
     /*!
      * \brief locomotiveBehavior Constructeur de la classe
      * \param loco la locomotive dont on représente le comportement
      */
-    LocomotiveBehavior(Locomotive &loco, std::shared_ptr<SharedSectionInterface> sharedSection, int stationContactId, int beforeSharedSectionContactId, int afterSharedSectionContactId,
-                       int turnAroundCount /*, autres paramètres éventuels */) : loco(loco),
-                                                                                  sharedSection(sharedSection),
-                                                                                  beforeSharedSectionContactId(beforeSharedSectionContactId),
-                                                                                  afterSharedSectionContactId(afterSharedSectionContactId),
-                                                                                  stationContactId(stationContactId),
-                                                                                  turnAroundCount(turnAroundCount) {
+    LocomotiveBehavior(Locomotive& loco, std::shared_ptr<SharedSectionInterface> sharedSection, int stationContactId,
+                       int beforeSharedSectionContactId, int afterSharedSectionContactId,
+                       int turnAroundCount, std::vector<SwitchSetup> switchSetups/*, autres paramètres éventuels */) : loco(loco),
+        sharedSection(std::move(sharedSection)),
+        beforeSharedSectionContactId(beforeSharedSectionContactId),
+        afterSharedSectionContactId(afterSharedSectionContactId),
+        stationContactId(stationContactId),
+ switchSetups(switchSetups),
+turnAroundCount(turnAroundCount)
+    {
         // Eventuel code supplémentaire du constructeur
     }
 
@@ -49,7 +61,7 @@ protected:
     /**
      * @brief loco La locomotive dont on représente le comportement
      */
-    Locomotive &loco;
+    Locomotive& loco;
 
     /**
      * @brief sharedSection Pointeur sur la section partagée
@@ -79,6 +91,8 @@ private:
      * The number of times the station has been reached by the locomotive
      */
     int stationReachedCount;
+
+    std::vector<SwitchSetup> switchSetups;
 
     /**
      *

@@ -14,9 +14,15 @@ void LocomotiveBehavior::run()
     loco.demarrer();
     loco.afficherMessage("Ready!");
 
-    while(true) {
+    while (true)
+    {
         attendre_contact(beforeSharedSectionContactId);
         sharedSection->access(loco);
+
+        for (auto switchSetup : switchSetups)
+        {
+            diriger_aiguillage(switchSetup.switchNumber, switchSetup.switchDirection, 0);
+        }
 
         attendre_contact(afterSharedSectionContactId);
         sharedSection->leave(loco);
@@ -25,7 +31,8 @@ void LocomotiveBehavior::run()
         attendre_contact(stationContactId);
 
         stationReachedCount++;
-        if (stationReachedCount % turnAroundCount == 0) {
+        if (stationReachedCount % turnAroundCount == 0)
+        {
             loco.inverserSens();
         }
 
