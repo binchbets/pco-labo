@@ -23,8 +23,12 @@ void LocomotiveBehavior::run()
     while(true) {
         // On attend qu'une locomotive arrive sur le contact 1.
         // Pertinent de faire ça dans les deux threads? Pas sûr...
-        attendre_contact(1);
-        loco.afficherMessage("J'ai atteint le contact 1");
+
+        // This only tells us the train has hit the contact. We must now tell trains apart to know which one hit which
+        // contact
+        attendre_contact(stationId);
+
+        loco.afficherMessage(QString::fromStdString("J'ai atteint le contact " + std::to_string(stationId)));
     }
 }
 
