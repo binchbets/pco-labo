@@ -30,7 +30,7 @@ public:
             switchingOperations(switchingOperations),
             isOccupied(false),
             isWaiting(false),
-            isOccupiedMutex(1),
+            mutex(1),
             lockUntilFree(0) {
         // TODO
     }
@@ -45,25 +45,22 @@ public:
      */
     void access(Locomotive &loco) override {
         // TODO
-
-        isOccupiedMutex.acquire();
+        mutex.acquire();
         if (isOccupied) {
             loco.arreter();
 
             isWaiting = true;
-
-            isOccupiedMutex.release();
+            mutex.release();
 
             afficher_message(qPrintable(QString("The train no. %1 is waiting at the shared section.").arg(loco.numero())));
 
             lockUntilFree.acquire();
-
             loco.demarrer();
 
             afficher_message(qPrintable(QString("The train no. %1 was release and can proceed to the shared section").arg(loco.numero())));
         } else {
             isOccupied = true;
-            isOccupiedMutex.release();
+            mutex.release();
 
             afficher_message(qPrintable(QString("The train no. %1 accesses the shared section.").arg(loco.numero())));
         }
@@ -76,16 +73,15 @@ public:
      */
     void leave(Locomotive &loco) override {
         // TODO
-        isOccupiedMutex.acquire();
+        mutex.acquire();
         isOccupied = false;
 
+        // We only have to release `lockUntilFree` if there is a train waiting.
         if (isWaiting) {
             lockUntilFree.release();
         }
         isWaiting = false;
-
-        isOccupiedMutex.release();
-
+        mutex.release();
 
         afficher_message(qPrintable(QString("The engine no. %1 leaves the shared section.").arg(loco.numero())));
     }
@@ -101,15 +97,17 @@ private:
     std::vector<std::tuple<int, int, int>> switchingOperations;
 
     /**
-     * Tells us whether or not the shared section is occupied
+     * Tells us whether or not the shared section is occupied.
      */
     bool isOccupied;
+    /**
+     * Tells us whether or there is a train waiting at the start of the shared section.
+     */
     bool isWaiting;
-    PcoSemaphore isOccupiedMutex;
-
+    PcoSemaphore mutex;
 
     /**
-     * Locks the caller of access (LocomotiveBehavior) until the shared section is free
+     * Locks the caller of access (LocomotiveBehavior) until the shared section is free.
      */
     PcoSemaphore lockUntilFree;
 
