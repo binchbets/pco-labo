@@ -33,26 +33,8 @@ void LocomotiveBehavior::run()
 
         attendre_contact(stationContactId);
 
-        stationReachedCount++;
-        if (stationReachedCount % turnAroundCount == 0)
-        {
-            loco.arreter();
+        sharedStation->enterStation(loco);
 
-            waitAtStationMutex.acquire();
-            if (LocomotiveBehavior::waitAtStation) {
-                LocomotiveBehavior::waitAtStation = false;
-                waitAtStationMutex.release();
-                releaseAtStation.acquire();
-            } else {
-                waitAtStationMutex.release();
-                PcoThread::usleep(2 * 1000 * 1000);
-                releaseAtStation.release();
-                LocomotiveBehavior::waitAtStation = true;
-            }
-
-            loco.inverserSens();
-            loco.demarrer();
-        }
 
         loco.afficherMessage(QString::fromStdString("J'ai atteint le contact " + std::to_string(stationContactId)));
     }

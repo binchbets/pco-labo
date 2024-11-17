@@ -72,7 +72,6 @@ public:
      * @param loco La locomotive qui quitte la section partagée
      */
     void leave(Locomotive &loco) override {
-        // TODO
         mutex.acquire();
         isOccupied = false;
 

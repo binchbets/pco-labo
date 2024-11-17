@@ -110,6 +110,8 @@ int cmain()
     // Création de la section partagée
     std::shared_ptr<SharedSectionInterface> sharedSection = std::make_shared<SharedSection>(switchingOperations);
 
+    std::shared_ptr<SharedStation> sharedStation = std::make_shared<SharedStation>(2, 1);
+
     // Setup random number generator
     std::random_device rd;
     std::mt19937 gen(rd());
@@ -117,12 +119,12 @@ int cmain()
 
     // Création du thread pour la loco 0
     std::unique_ptr<Launchable> locoBehaveA = std::make_unique<LocomotiveBehavior>(
-        locoA, sharedSection, 5, 25, 15, dist(gen),
+        locoA, sharedSection, sharedStation, 5, 25, 15, dist(gen),
         std::vector<SwitchSetup>{{14, TOUT_DROIT}, {13, DEVIE}, {10, DEVIE}, {9, TOUT_DROIT}}
     );
     // Création du thread pour la loco 1
     std::unique_ptr<Launchable> locoBehaveB = std::make_unique<LocomotiveBehavior>(
-        locoB, sharedSection, 30, 21, 12, dist(gen),
+        locoB, sharedSection, sharedStation, 30, 21, 12, dist(gen),
         std::vector<SwitchSetup>{{16, TOUT_DROIT}, {13, TOUT_DROIT}, {10, TOUT_DROIT}, {7, TOUT_DROIT}}
     );
 
