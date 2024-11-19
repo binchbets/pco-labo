@@ -23,9 +23,9 @@ void LocomotiveBehavior::run()
         attendre_contact(beforeSharedSectionContactId);
         sharedSection->access(loco);
 
-        for (auto switchSetup : switchSetups)
+        for (auto [switchNumber, switchDirection] : switchSetups)
         {
-            diriger_aiguillage(switchSetup.switchNumber, switchSetup.switchDirection, 0);
+            diriger_aiguillage(switchNumber, switchDirection, 0);
         }
 
         attendre_contact(afterSharedSectionContactId);
@@ -35,6 +35,7 @@ void LocomotiveBehavior::run()
 
         sharedStation->enterStation(loco);
 
+        std::swap(beforeSharedSectionContactId, afterSharedSectionContactId);
 
         loco.afficherMessage(QString::fromStdString("J'ai atteint le contact " + std::to_string(stationContactId)));
     }

@@ -40,6 +40,10 @@ void SharedStation::enterStation(Locomotive& loco)
             loco.afficherMessage("Attente, puis liberation");
             PcoThread::usleep(2 * 1000 * 1000);
             currentlyWaiting = 0;
+
+            // Reset all turn counts
+            for (auto& [_, v] : currentTurnCount) v = 0;
+
             for (int i = 1; i < nbTrains; ++i)
             {
                 stationWait.release();
