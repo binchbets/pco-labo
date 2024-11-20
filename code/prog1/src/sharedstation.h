@@ -2,7 +2,7 @@
 #define SHARED_STATION_H
 
 #include <pcosynchro/pcosemaphore.h>
-#include <locomotive.h>
+#include "locomotive.h"
 #include <map>
 
 class SharedStation

@@ -100,32 +100,25 @@ int cmain()
      * Threads des locos *
      ********************/
 
-    std::vector<std::tuple<int, int, int>> switchingOperations{};
-    // train id, switch id, direction
-    switchingOperations.emplace_back(7, 13, TOUT_DROIT);
-    switchingOperations.emplace_back(42, 13, DEVIE);
-    switchingOperations.emplace_back(7, 10, TOUT_DROIT);
-    switchingOperations.emplace_back(42, 10, DEVIE);
-
     // Création de la section partagée
-    std::shared_ptr<SharedSectionInterface> sharedSection = std::make_shared<SharedSection>(switchingOperations);
-
-    std::shared_ptr<SharedStation> sharedStation = std::make_shared<SharedStation>(2, 1);
+    std::shared_ptr<SharedSectionInterface> sharedSection = std::make_shared<SharedSection>();
 
     // Setup random number generator
     std::random_device rd;
     std::mt19937 gen(rd());
     std::uniform_int_distribution<> dist(1, 10);
 
+    std::shared_ptr<SharedStation> sharedStation = std::make_shared<SharedStation>(2, dist(gen));
+
     // Création du thread pour la loco 0
     std::unique_ptr<Launchable> locoBehaveA = std::make_unique<LocomotiveBehavior>(
-        locoA, sharedSection, sharedStation, 5, 25, 14, dist(gen),
-        std::vector<SwitchSetup>{{14, TOUT_DROIT}, {13, DEVIE}, {10, DEVIE}, {9, TOUT_DROIT}}
+        locoA, sharedSection, sharedStation, 5, 25, 14,
+        std::vector<SwitchSetup>{{13, DEVIE}, {10, DEVIE}}
     );
     // Création du thread pour la loco 1
     std::unique_ptr<Launchable> locoBehaveB = std::make_unique<LocomotiveBehavior>(
-        locoB, sharedSection, sharedStation, 30, 21, 11, dist(gen),
-        std::vector<SwitchSetup>{{16, TOUT_DROIT}, {13, TOUT_DROIT}, {10, TOUT_DROIT}, {7, TOUT_DROIT}}
+        locoB, sharedSection, sharedStation, 30, 21, 11,
+        std::vector<SwitchSetup>{{13, TOUT_DROIT}, {10, TOUT_DROIT}}
     );
 
     // Lanchement des threads

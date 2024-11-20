@@ -26,8 +26,7 @@ public:
      * @brief SharedSection Constructeur de la classe qui représente la section partagée.
      * Initialisez vos éventuels attributs ici, sémaphores etc.
      */
-    SharedSection(std::vector<std::tuple<int, int, int>> &switchingOperations) :
-            switchingOperations(switchingOperations),
+    SharedSection() :
             isOccupied(false),
             isWaiting(false),
             mutex(1),
@@ -88,12 +87,6 @@ public:
 private:
 
     /* A vous d'ajouter ce qu'il vous faut */
-
-    /**
-     * Contains a pair of (contact point, switch) that are used to toggle the switch when a train passes over a contact
-     * point.
-     */
-    std::vector<std::tuple<int, int, int>> switchingOperations;
 
     /**
      * Tells us whether or not the shared section is occupied.

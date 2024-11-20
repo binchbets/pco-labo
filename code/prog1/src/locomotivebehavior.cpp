@@ -7,10 +7,6 @@
 #include "locomotivebehavior.h"
 #include "ctrain_handler.h"
 
-PcoSemaphore LocomotiveBehavior::releaseAtStation = PcoSemaphore(0);
-PcoSemaphore LocomotiveBehavior::waitAtStationMutex = PcoSemaphore(1);
-bool LocomotiveBehavior::waitAtStation = true;
-
 void LocomotiveBehavior::run()
 {
     //Initialisation de la locomotive
@@ -34,8 +30,6 @@ void LocomotiveBehavior::run()
         attendre_contact(stationContactId);
 
         sharedStation->enterStation(loco);
-
-        std::swap(beforeSharedSectionContactId, afterSharedSectionContactId);
 
         loco.afficherMessage(QString::fromStdString("J'ai atteint le contact " + std::to_string(stationContactId)));
     }

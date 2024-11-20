@@ -34,15 +34,14 @@ public:
     LocomotiveBehavior(Locomotive& loco, std::shared_ptr<SharedSectionInterface> sharedSection,
                        std::shared_ptr<SharedStation> sharedStation, int stationContactId,
                        int beforeSharedSectionContactId, int afterSharedSectionContactId,
-                       int turnAroundCount, std::vector<SwitchSetup> switchSetups/*, autres paramètres éventuels */)
+                       std::vector<SwitchSetup> switchSetups/*, autres paramètres éventuels */)
         : loco(loco),
           sharedSection(std::move(sharedSection)),
           sharedStation(std::move(sharedStation)),
           beforeSharedSectionContactId(beforeSharedSectionContactId),
           afterSharedSectionContactId(afterSharedSectionContactId),
           stationContactId(stationContactId),
-          switchSetups(std::move(switchSetups)),
-          turnAroundCount(turnAroundCount)
+          switchSetups(std::move(switchSetups))
     {
         // Eventuel code supplémentaire du constructeur
     }
@@ -93,27 +92,12 @@ private:
      */
     int stationContactId;
 
-    /**
-     * The number of times the station has been reached by the locomotive
-     */
-    int stationReachedCount;
-
     std::vector<SwitchSetup> switchSetups;
-
-    /**
-     * The number of times the train has to pass over his station before turning around.
-     */
-    const int turnAroundCount;
 
     /**
      * This semaphore is used to wait on the other train when waiting at the station.
      */
     static PcoSemaphore releaseAtStation;
-
-    /**
-     * Tells us whether or not we should wait at the station (whether we are the first train waiting or not)
-     */
-    static bool waitAtStation;
 
     /**
      * This mutex protects `waitAtStation`.

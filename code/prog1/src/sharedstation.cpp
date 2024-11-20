@@ -4,9 +4,6 @@
 // /_/   \___/\____/ /____/\___/____//_/   //
 //
 
-#include <chrono>
-#include <thread>
-
 #include "sharedstation.h"
 
 #include <pcosynchro/pcothread.h>
@@ -19,18 +16,7 @@ SharedStation::SharedStation(int nbTrains, int nbTours): nbTrains(nbTrains), nbT
 void SharedStation::enterStation(Locomotive& loco)
 {
     lock.acquire();
-    int turnCount;
-    try
-    {
-        turnCount = currentTurnCount.at(loco.numero());
-    }
-    catch ([[maybe_unused]] const std::out_of_range& ex)
-    {
-        turnCount = 0;
-    }
-
-    currentTurnCount[loco.numero()] = ++turnCount;
-
+    int turnCount = ++currentTurnCount[loco.numero()];
 
     if (turnCount == nbTours)
     {
