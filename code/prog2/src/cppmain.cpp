@@ -11,6 +11,7 @@
 #include "locomotivebehavior.h"
 #include "sharedsectioninterface.h"
 #include "sharedsection.h"
+#include <random>
 
 // Locomotives :
 // Vous pouvez changer les vitesses initiales, ou utiliser la fonction loco.fixerVitesse(vitesse);
@@ -25,6 +26,8 @@ static Locomotive locoB(42 /* Numéro (pour commande trains sur maquette réelle
 void emergency_stop()
 {
     // TODO
+    locoA.arreter();
+    locoB.arreter();
 
     afficher_message("\nSTOP!");
 }
@@ -49,27 +52,27 @@ int cmain()
     // Vous devrez utiliser cette fonction pour la section partagée pour aiguiller les locos
     // sur le bon parcours (par exemple à la sortie de la section partagée) vous pouvez l'
     // appeler depuis vos thread des locos par ex.
-    diriger_aiguillage(1,  TOUT_DROIT, 0);
-    diriger_aiguillage(2,  DEVIE     , 0);
-    diriger_aiguillage(3,  DEVIE     , 0);
-    diriger_aiguillage(4,  TOUT_DROIT, 0);
-    diriger_aiguillage(5,  TOUT_DROIT, 0);
-    diriger_aiguillage(6,  TOUT_DROIT, 0);
-    diriger_aiguillage(7,  TOUT_DROIT, 0);
-    diriger_aiguillage(8,  DEVIE     , 0);
-    diriger_aiguillage(9,  DEVIE     , 0);
+    diriger_aiguillage(1, TOUT_DROIT, 0);
+    diriger_aiguillage(2, DEVIE, 0);
+    diriger_aiguillage(3, DEVIE, 0);
+    diriger_aiguillage(4, TOUT_DROIT, 0);
+    diriger_aiguillage(5, TOUT_DROIT, 0);
+    diriger_aiguillage(6, TOUT_DROIT, 0);
+    diriger_aiguillage(7, TOUT_DROIT, 0);
+    diriger_aiguillage(8, DEVIE, 0);
+    diriger_aiguillage(9, TOUT_DROIT, 0);
     diriger_aiguillage(10, TOUT_DROIT, 0);
     diriger_aiguillage(11, TOUT_DROIT, 0);
     diriger_aiguillage(12, TOUT_DROIT, 0);
-    diriger_aiguillage(13, TOUT_DROIT, 0);
-    diriger_aiguillage(14, DEVIE     , 0);
-    diriger_aiguillage(15, DEVIE     , 0);
+    diriger_aiguillage(13, DEVIE, 0);
+    diriger_aiguillage(14, TOUT_DROIT, 0);
+    diriger_aiguillage(15, DEVIE, 0);
     diriger_aiguillage(16, TOUT_DROIT, 0);
     diriger_aiguillage(17, TOUT_DROIT, 0);
     diriger_aiguillage(18, TOUT_DROIT, 0);
     diriger_aiguillage(19, TOUT_DROIT, 0);
-    diriger_aiguillage(20, DEVIE     , 0);
-    diriger_aiguillage(21, DEVIE     , 0);
+    diriger_aiguillage(20, DEVIE, 0);
+    diriger_aiguillage(21, DEVIE, 0);
     diriger_aiguillage(22, TOUT_DROIT, 0);
     diriger_aiguillage(23, TOUT_DROIT, 0);
     diriger_aiguillage(24, TOUT_DROIT, 0);
@@ -81,7 +84,7 @@ int cmain()
 
     // Loco 0
     // Exemple de position de départ
-    locoA.fixerPosition(25, 32);
+    locoA.fixerPosition(33, 34);
 
     // Loco 1
     // Exemple de position de départ
@@ -101,10 +104,28 @@ int cmain()
     // Création de la section partagée
     std::shared_ptr<SharedSectionInterface> sharedSection = std::make_shared<SharedSection>();
 
+    // Setup random number generator
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_int_distribution<> dist(1, 10);
+
+    // The number of turns a train does before going the other way.
+    int turnCount = dist(gen);
+
+    std::shared_ptr<SharedStation> sharedStation = std::make_shared<SharedStation>(2, turnCount);
+
     // Création du thread pour la loco 0
-    std::unique_ptr<Launchable> locoBehaveA = std::make_unique<LocomotiveBehavior>(locoA, sharedSection /*, autres paramètres ...*/);
+    std::unique_ptr<Launchable> locoBehaveA = std::make_unique<LocomotiveBehavior>(
+            locoA, sharedSection, sharedStation, 5, 25, 14, turnCount,
+            std::vector<SwitchSetup>{{13, DEVIE},
+                                     {10, DEVIE}}
+    );
     // Création du thread pour la loco 1
-    std::unique_ptr<Launchable> locoBehaveB = std::make_unique<LocomotiveBehavior>(locoB, sharedSection /*, autres paramètres ...*/);
+    std::unique_ptr<Launchable> locoBehaveB = std::make_unique<LocomotiveBehavior>(
+            locoB, sharedSection, sharedStation, 30, 21, 11, turnCount,
+            std::vector<SwitchSetup>{{13, TOUT_DROIT},
+                                     {10, TOUT_DROIT}}
+    );
 
     // Lanchement des threads
     afficher_message(qPrintable(QString("Lancement thread loco A (numéro %1)").arg(locoA.numero())));

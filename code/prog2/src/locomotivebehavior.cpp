@@ -2,11 +2,11 @@
 //   / _ \/ ___/ __ \  |_  |/ _ \|_  / / / //
 //  / ___/ /__/ /_/ / / __// // / __/_  _/ //
 // /_/   \___/\____/ /____/\___/____//_/   //
-//                                         //
-
+//
 
 #include "locomotivebehavior.h"
 #include "ctrain_handler.h"
+#include "sharedstation.h"
 
 void LocomotiveBehavior::run()
 {
@@ -15,19 +15,29 @@ void LocomotiveBehavior::run()
     loco.demarrer();
     loco.afficherMessage("Ready!");
 
-    /* A vous de jouer ! */
+    while (!PcoThread::thisThread()->stopRequested())
+    {
+        for (int i = 0; i < turnAroundCount; i++) {
+            attendre_contact(beforeSharedSectionContactId);
+            sharedSection->access(loco, 0);
 
-    // Vous pouvez appeler les méthodes de la section partagée comme ceci :
-    //sharedSection->request(loco);
-    //sharedSection->getAccess(loco);
-    //sharedSection->leave(loco);
+            for (auto [switchNumber, switchDirection] : switchSetups)
+            {
+                diriger_aiguillage(switchNumber, switchDirection, 0);
+            }
 
-    while(true) {
-        // On attend qu'une locomotive arrive sur le contact 1.
-        // Pertinent de faire ça dans les deux threads? Pas sûr...
-        attendre_contact(1);
-        loco.afficherMessage("J'ai atteint le contact 1");
-}
+            attendre_contact(afterSharedSectionContactId);
+            sharedSection->leave(loco);
+
+            attendre_contact(stationContactId);
+
+            sharedStation->enterStation(loco);
+
+            loco.afficherMessage(QString::fromStdString("J'ai atteint le contact " + std::to_string(stationContactId)));
+        }
+
+        std::swap(beforeSharedSectionContactId, afterSharedSectionContactId);
+    }
 }
 
 void LocomotiveBehavior::printStartMessage()
