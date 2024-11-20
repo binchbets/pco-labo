@@ -32,7 +32,7 @@ void SharedStation::enterStation(Locomotive& loco)
             currentlyWaiting = 0;
 
             // Reset all turn counts
-            for (auto& [_, v] : currentTurnCount) v = 0;
+            currentTurnCount.clear();
 
             for (int i = 1; i < nbTrains; ++i)
             {

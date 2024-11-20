@@ -109,11 +109,12 @@ int cmain()
     std::mt19937 gen(rd());
     std::uniform_int_distribution<> dist(1, 10);
 
+    // Set a random priority to the trains
     locoA.priority = dist(gen);
     locoB.priority = dist(gen);
 
     // The number of turns a train does before going the other way.
-    int turnCount = 1;
+    int turnCount = dist(gen);
 
     std::shared_ptr<SharedStation> sharedStation = std::make_shared<SharedStation>(2, turnCount, sharedSection);
 
