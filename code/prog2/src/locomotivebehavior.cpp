@@ -7,6 +7,8 @@
 #include "locomotivebehavior.h"
 #include "ctrain_handler.h"
 #include "sharedstation.h"
+#include <algorithm>
+#include <iostream>
 
 void LocomotiveBehavior::run()
 {
@@ -17,26 +19,29 @@ void LocomotiveBehavior::run()
 
     while (!PcoThread::thisThread()->stopRequested())
     {
+        // TODO(alexandre): Improve requestsContacts
         for (int i = 0; i < turnAroundCount; i++) {
-            attendre_contact(beforeSharedSectionContactId);
-            sharedSection->access(loco, 0);
+            attendre_contact(requestContacts[0]);
+            sharedSection->request(loco, loco.priority);
+
+            attendre_contact(requestContacts[1]);
+            sharedSection->access(loco, loco.priority);
 
             for (auto [switchNumber, switchDirection] : switchSetups)
             {
                 diriger_aiguillage(switchNumber, switchDirection, 0);
             }
 
-            attendre_contact(afterSharedSectionContactId);
+            attendre_contact(requestContacts[3]);
             sharedSection->leave(loco);
 
             attendre_contact(stationContactId);
-
             sharedStation->enterStation(loco);
 
             loco.afficherMessage(QString::fromStdString("J'ai atteint le contact " + std::to_string(stationContactId)));
         }
 
-        std::swap(beforeSharedSectionContactId, afterSharedSectionContactId);
+        std::reverse(requestContacts.begin(), requestContacts.end());
     }
 }
 

@@ -8,10 +8,11 @@
 #include <thread>
 
 #include "sharedstation.h"
+#include "sharedsection.h"
 
 #include <pcosynchro/pcothread.h>
 
-SharedStation::SharedStation(int nbTrains, int nbTours): nbTrains(nbTrains), nbTours(nbTours), currentlyWaiting(0)
+SharedStation::SharedStation(int nbTrains, int nbTours, std::shared_ptr<SharedSectionInterface> sharedSection): nbTrains(nbTrains), nbTours(nbTours), currentlyWaiting(0), sharedSection(sharedSection)
 {
 }
 
@@ -37,6 +38,12 @@ void SharedStation::enterStation(Locomotive& loco)
             {
                 stationWait.release();
             }
+
+            // TODO(alexandre): I don't know if this is the best way to do this but I can't think of a better place
+            // What we want to do is toggle the priority mode once the trains turn around. But we cannot do that inside
+            // the `locomotivebehavior` as we only want to call this once per cycle.
+            sharedSection->togglePriorityMode();
+
             lock.release();
         } else
         {
@@ -46,6 +53,14 @@ void SharedStation::enterStation(Locomotive& loco)
             // Block
             stationWait.acquire();
         }
+
+        // Setup random number generator
+        std::random_device rd;
+        std::mt19937 gen(rd());
+        std::uniform_int_distribution<> dist(1, 10);
+
+        // We set a new priority to the train
+        loco.priority = dist(gen);
 
         loco.inverserSens();
         loco.demarrer();
