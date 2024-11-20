@@ -8,7 +8,7 @@
 
 #include <pcosynchro/pcothread.h>
 
-SharedStation::SharedStation(int nbTrains, int nbTours): nbTrains(nbTrains), nbTours(nbTours)
+SharedStation::SharedStation(int nbTrains, int nbTours): nbTrains(nbTrains), nbTours(nbTours), currentlyWaiting(0)
 {
 }
 

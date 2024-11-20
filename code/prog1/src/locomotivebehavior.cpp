@@ -16,22 +16,26 @@ void LocomotiveBehavior::run()
 
     while (!PcoThread::thisThread()->stopRequested())
     {
-        attendre_contact(beforeSharedSectionContactId);
-        sharedSection->access(loco);
+        for (int i = 0; i < turnAroundCount; i++) {
+            attendre_contact(beforeSharedSectionContactId);
+            sharedSection->access(loco);
 
-        for (auto [switchNumber, switchDirection] : switchSetups)
-        {
-            diriger_aiguillage(switchNumber, switchDirection, 0);
+            for (auto [switchNumber, switchDirection] : switchSetups)
+            {
+                diriger_aiguillage(switchNumber, switchDirection, 0);
+            }
+
+            attendre_contact(afterSharedSectionContactId);
+            sharedSection->leave(loco);
+
+            attendre_contact(stationContactId);
+
+            sharedStation->enterStation(loco);
+
+            loco.afficherMessage(QString::fromStdString("J'ai atteint le contact " + std::to_string(stationContactId)));
         }
 
-        attendre_contact(afterSharedSectionContactId);
-        sharedSection->leave(loco);
-
-        attendre_contact(stationContactId);
-
-        sharedStation->enterStation(loco);
-
-        loco.afficherMessage(QString::fromStdString("J'ai atteint le contact " + std::to_string(stationContactId)));
+        std::swap(beforeSharedSectionContactId, afterSharedSectionContactId);
     }
 }
 

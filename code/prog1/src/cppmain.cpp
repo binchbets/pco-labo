@@ -108,16 +108,19 @@ int cmain()
     std::mt19937 gen(rd());
     std::uniform_int_distribution<> dist(1, 10);
 
-    std::shared_ptr<SharedStation> sharedStation = std::make_shared<SharedStation>(2, dist(gen));
+    // The number of turns a train does before going the other way.
+    int turnCount = dist(gen);
+
+    std::shared_ptr<SharedStation> sharedStation = std::make_shared<SharedStation>(2, turnCount);
 
     // Création du thread pour la loco 0
     std::unique_ptr<Launchable> locoBehaveA = std::make_unique<LocomotiveBehavior>(
-        locoA, sharedSection, sharedStation, 5, 25, 14,
+        locoA, sharedSection, sharedStation, 5, 25, 14, turnCount,
         std::vector<SwitchSetup>{{13, DEVIE}, {10, DEVIE}}
     );
     // Création du thread pour la loco 1
     std::unique_ptr<Launchable> locoBehaveB = std::make_unique<LocomotiveBehavior>(
-        locoB, sharedSection, sharedStation, 30, 21, 11,
+        locoB, sharedSection, sharedStation, 30, 21, 11, turnCount,
         std::vector<SwitchSetup>{{13, TOUT_DROIT}, {10, TOUT_DROIT}}
     );
 

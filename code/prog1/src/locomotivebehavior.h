@@ -33,13 +33,14 @@ public:
      */
     LocomotiveBehavior(Locomotive& loco, std::shared_ptr<SharedSectionInterface> sharedSection,
                        std::shared_ptr<SharedStation> sharedStation, int stationContactId,
-                       int beforeSharedSectionContactId, int afterSharedSectionContactId,
+                       int beforeSharedSectionContactId, int afterSharedSectionContactId, int turnAroundCount,
                        std::vector<SwitchSetup> switchSetups/*, autres paramètres éventuels */)
         : loco(loco),
           sharedSection(std::move(sharedSection)),
           sharedStation(std::move(sharedStation)),
           beforeSharedSectionContactId(beforeSharedSectionContactId),
           afterSharedSectionContactId(afterSharedSectionContactId),
+          turnAroundCount(turnAroundCount),
           stationContactId(stationContactId),
           switchSetups(std::move(switchSetups))
     {
@@ -86,6 +87,8 @@ private:
     int beforeSharedSectionContactId;
 
     int afterSharedSectionContactId;
+
+    int turnAroundCount;
 
     /**
      * The id of the contact that represents the locomotive station
