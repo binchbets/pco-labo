@@ -17,13 +17,12 @@
 // Laissez les numéros des locos à 0 et 1 pour ce laboratoire
 
 // Locomotive A
-static Locomotive locoA(7 /* Numéro (pour commande trains sur maquette réelle) */, 10 /* Vitesse */);
+static Locomotive locoA(0 /* Numéro (pour commande trains sur maquette réelle) */, 10 /* Vitesse */);
 // Locomotive B
-static Locomotive locoB(42 /* Numéro (pour commande trains sur maquette réelle) */, 12 /* Vitesse */);
+static Locomotive locoB(1 /* Numéro (pour commande trains sur maquette réelle) */, 12 /* Vitesse */);
 
 //Arret d'urgence
-void emergency_stop()
-{
+void emergency_stop() {
     // TODO
     locoA.arreter();
     locoB.arreter();
@@ -33,8 +32,7 @@ void emergency_stop()
 
 
 //Fonction principale
-int cmain()
-{
+int cmain() {
     /************
      * Maquette *
      ************/
@@ -115,13 +113,15 @@ int cmain()
 
     // Création du thread pour la loco 0
     std::unique_ptr<Launchable> locoBehaveA = std::make_unique<LocomotiveBehavior>(
-        locoA, sharedSection, sharedStation, 5, 25, 14, turnCount,
-        std::vector<SwitchSetup>{{13, DEVIE}, {10, DEVIE}}
+            locoA, sharedSection, sharedStation, 5, 25, 14, turnCount,
+            std::vector<SwitchSetup>{{13, DEVIE},
+                                     {10, DEVIE}}
     );
     // Création du thread pour la loco 1
     std::unique_ptr<Launchable> locoBehaveB = std::make_unique<LocomotiveBehavior>(
-        locoB, sharedSection, sharedStation, 30, 21, 11, turnCount,
-        std::vector<SwitchSetup>{{13, TOUT_DROIT}, {10, TOUT_DROIT}}
+            locoB, sharedSection, sharedStation, 30, 21, 11, turnCount,
+            std::vector<SwitchSetup>{{13, TOUT_DROIT},
+                                     {10, TOUT_DROIT}}
     );
 
     // Lanchement des threads
