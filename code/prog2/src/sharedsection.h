@@ -20,32 +20,35 @@
  * @brief La classe SharedSection implémente l'interface SharedSectionInterface qui
  * propose les méthodes liées à la section partagée.
  */
-class SharedSection final : public SharedSectionInterface {
+class SharedSection final : public SharedSectionInterface
+{
 public:
-
     /**
      * @brief SharedSection Constructeur de la classe qui représente la section partagée.
      * Initialisez vos éventuels attributs ici, sémaphores etc.
      */
     SharedSection() :
-            isOccupied(false),
-            mutex(1),
-            lockUntilFree(0),
-            priorityMode(PriorityMode::HIGH_PRIORITY) {
-        // TODO
+        isOccupied(false),
+        mutex(1),
+        lockUntilFree(0),
+        priorityMode(PriorityMode::HIGH_PRIORITY),
+        currentPriority(-1)
+    {
     }
 
     /**
      * @brief request Méthode a appeler pour indiquer que la locomotive désire accéder à la
      * section partagée (deux contacts avant la section partagée).
      * @param loco La locomotive qui désire accéder
-     * @param locoId L'identidiant de la locomotive qui fait l'appel
-     * @param entryPoint Le point d'entree de la locomotive qui fait l'appel
+     * @param priority The priority of the current locomotive.
      */
-    void request(Locomotive &loco, int priority) override {
-        // TODO
+    void request(Locomotive& loco, int priority) override
+    {
         mutex.acquire();
-        requests[loco.numero()] = priority;
+        if (shouldGetThrough(loco))
+        {
+            currentPriority = priority;
+        }
         mutex.release();
 
         // Exemple de message dans la console globale
@@ -60,24 +63,32 @@ public:
      * la locomotive redémarée. (méthode à appeler un contact avant la section partagée).
      * @param loco La locomotive qui essaie accéder à la section partagée
      */
-    void access(Locomotive &loco, int priority) override {
-        // TODO
+    void access(Locomotive& loco, int priority) override
+    {
         mutex.acquire();
-        if (isOccupied || !shouldGetThrough(loco)) {
+        if (isOccupied || priority != currentPriority)
+        {
             loco.arreter();
 
             mutex.release();
 
             afficher_message(
-                    qPrintable(QString("The train no. %1 is waiting at the shared section.").arg(loco.numero())));
+                qPrintable(QString("The train no. %1 is waiting at the shared section.").arg(loco.numero())));
 
+            //SAFETY: As the current design only enforces two trains, we are guaranteed that only
+            // a single tread can reach that current section. isWaiting does not need to be locked then
+            isWaiting = true;
             lockUntilFree.acquire();
+            isWaiting = false;
+
             loco.demarrer();
 
             afficher_message(qPrintable(
-                                     QString("The train no. %1 was release and can proceed to the shared section").arg(
-                                             loco.numero())));
-        } else {
+                QString("The train no. %1 was released and can proceed to the shared section").arg(
+                    loco.numero())));
+        }
+        else
+        {
             isOccupied = true;
             mutex.release();
 
@@ -90,30 +101,31 @@ public:
      * partagée. (reveille les threads des locomotives potentiellement en attente).
      * @param loco La locomotive qui quitte la section partagée
      */
-    void leave(Locomotive &loco) override {
+    void leave(Locomotive& loco) override
+    {
         mutex.acquire();
         isOccupied = false;
 
         // We only have to release `lockUntilFree` if there is a train waiting.
-        if (isWaiting()) {
+        if (isWaiting)
+        {
             lockUntilFree.release();
         }
 
-        requests.clear();
+        currentPriority = -1;
 
         mutex.release();
 
         afficher_message(qPrintable(QString("The engine no. %1 leaves the shared section.").arg(loco.numero())));
     }
 
-    void togglePriorityMode() override {
-        /* TODO */
+    void togglePriorityMode() override
+    {
         priorityMode =
-                priorityMode == PriorityMode::LOW_PRIORITY ? PriorityMode::HIGH_PRIORITY : PriorityMode::LOW_PRIORITY;
+            priorityMode == PriorityMode::LOW_PRIORITY ? PriorityMode::HIGH_PRIORITY : PriorityMode::LOW_PRIORITY;
     }
 
 private:
-
     /* A vous d'ajouter ce qu'il vous faut */
 
     PriorityMode priorityMode;
@@ -131,37 +143,35 @@ private:
     PcoSemaphore lockUntilFree;
 
     /**
-     * Stores the shared section access requests.
+     * Tells if a train is waiting for the section
      */
-    std::map<int, int> requests;
-
+    bool isWaiting;
     /**
-     * Tells us whether or there is a train waiting at the start of the shared section.
+     * Stores the current train with the maximum priority, that currently has the lead on the request.
      */
-    bool isWaiting() {
-        return !requests.empty();
-    }
+    int currentPriority;
 
     /**
      * Tells us whether the given train should be the next one to get through the shared section
      */
-    bool shouldGetThrough(const Locomotive& loco) {
+    bool shouldGetThrough(const Locomotive& loco)
+    {
         // If no one is waiting, the train can get through
-        if (!isWaiting()) {
+        if (currentPriority == -1)
+        {
             return true;
         }
 
-        if (priorityMode == PriorityMode::LOW_PRIORITY) {
-            return loco.numero() == std::min_element(std::begin(requests), std::end(requests),
-                                                     [](const auto &l, const auto &r) { return l.second < r.second; })->first;
-        } else {
-            return loco.numero() == std::max_element(std::begin(requests), std::end(requests),
-                                              [](const auto &l, const auto &r) { return l.second > r.second; })->first;
+        switch (priorityMode)
+        {
+        case PriorityMode::HIGH_PRIORITY:
+            return currentPriority > loco.priority;
+        case PriorityMode::LOW_PRIORITY:
+            return currentPriority < loco.priority;
+        default:
+            return false;
         }
     }
-
-    // Méthodes privées ...
-    // Attribut privés ...
 };
 
 

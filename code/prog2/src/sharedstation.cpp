@@ -39,9 +39,7 @@ void SharedStation::enterStation(Locomotive& loco)
                 stationWait.release();
             }
 
-            // TODO(alexandre): I don't know if this is the best way to do this but I can't think of a better place
-            // What we want to do is toggle the priority mode once the trains turn around. But we cannot do that inside
-            // the `locomotivebehavior` as we only want to call this once per cycle.
+            // We reset the priority mode every time we stop at the station, as asked in the specifications.
             sharedSection->togglePriorityMode();
 
             lock.release();
