@@ -68,7 +68,9 @@ public:
     void access(Locomotive& loco, int priority) override
     {
         mutex.acquire();
-        if (isOccupied || priority != currentPriority)
+        // We added a check for the -1 case, if theother train is leaving the critical section while the other train
+        // is between the request and access.
+        if (isOccupied || (currentPriority != -1 && priority != currentPriority))
         {
             loco.arreter();
 
