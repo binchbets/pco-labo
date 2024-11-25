@@ -81,8 +81,14 @@ protected:
      */
 
 private:
+    /**
+     * The number of turns a train does before turning around
+     */
     int turnAroundCount;
 
+    /**
+     * The contacts used to perform the request-access algorithm.
+     */
     std::vector<int> requestContacts;
 
     /**
@@ -90,6 +96,9 @@ private:
      */
     int stationContactId;
 
+    /**
+     * The state in which the switch should be when the train is in the shared section
+     */
     std::vector<SwitchSetup> switchSetups;
 
     /**

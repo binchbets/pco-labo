@@ -19,7 +19,6 @@ void LocomotiveBehavior::run()
 
     while (!PcoThread::thisThread()->stopRequested())
     {
-        // TODO(alexandre): Improve requestsContacts
         for (int i = 0; i < turnAroundCount; i++) {
             attendre_contact(requestContacts[0]);
             sharedSection->request(loco, loco.priority);

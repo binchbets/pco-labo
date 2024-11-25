@@ -32,7 +32,6 @@ set(SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/src/locomotive.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/cppmain.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/locomotivebehavior.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/railroute.cpp
 )
 
 set(HEADERS
@@ -42,7 +41,6 @@ set(HEADERS
     ${CMAKE_CURRENT_SOURCE_DIR}/src/launchable.h
     ${CMAKE_CURRENT_SOURCE_DIR}/src/locomotivebehavior.h
     ${CMAKE_CURRENT_SOURCE_DIR}/src/sharedsection.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/railroute.h
 )
 
 qt_add_resources(SOURCES ../../QtrainSim/qtrainsim.qrc)
