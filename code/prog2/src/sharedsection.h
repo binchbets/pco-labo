@@ -45,10 +45,12 @@ public:
     void request(Locomotive& loco, int priority) override
     {
         mutex.acquire();
-        if (shouldGetThrough(loco))
+
+        if (hasHigherPriority(loco))
         {
             currentPriority = priority;
         }
+
         mutex.release();
 
         // Exemple de message dans la console globale
@@ -70,16 +72,17 @@ public:
         {
             loco.arreter();
 
-            mutex.release();
-
             afficher_message(
                 qPrintable(QString("The train no. %1 is waiting at the shared section.").arg(loco.numero())));
-
-            //SAFETY: As the current design only enforces two trains, we are guaranteed that only
-            // a single tread can reach that current section. isWaiting does not need to be locked then
             isWaiting = true;
+            mutex.release();
+
+
             lockUntilFree.acquire();
+
+            mutex.acquire();
             isWaiting = false;
+            mutex.release();
 
             loco.demarrer();
 
@@ -154,7 +157,7 @@ private:
     /**
      * Tells us whether the given train should be the next one to get through the shared section
      */
-    bool shouldGetThrough(const Locomotive& loco)
+    [[nodiscard]] bool hasHigherPriority(const Locomotive& loco) const
     {
         // If no one is waiting, the train can get through
         if (currentPriority == -1)
