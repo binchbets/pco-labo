@@ -32,7 +32,8 @@ public:
         mutex(1),
         lockUntilFree(0),
         priorityMode(PriorityMode::HIGH_PRIORITY),
-        currentPriority(-1)
+        currentPriority(-1),
+        currentPriorityLocomotiveId(-1)
     {
     }
 
@@ -49,6 +50,7 @@ public:
         if (hasHigherPriority(loco))
         {
             currentPriority = priority;
+            currentPriorityLocomotiveId = loco.numero();
         }
 
         mutex.release();
@@ -70,7 +72,7 @@ public:
         mutex.acquire();
         // We added a check for the -1 case, if theother train is leaving the critical section while the other train
         // is between the request and access.
-        if (isOccupied || (currentPriority != -1 && priority != currentPriority))
+        if (isOccupied || (currentPriorityLocomotiveId != -1 && currentPriorityLocomotiveId != loco.numero()))
         {
             loco.arreter();
 
@@ -118,6 +120,7 @@ public:
         }
 
         currentPriority = -1;
+        currentPriorityLocomotiveId = -1;
 
         mutex.release();
 
@@ -155,6 +158,11 @@ private:
      * Stores the current train with the maximum priority, that currently has the lead on the request.
      */
     int currentPriority;
+
+    /**
+     * Stores the ID of the locomotive with the highest priority
+     */
+    int currentPriorityLocomotiveId;
 
     /**
      * Tells us whether the given train should be the next one to get through the shared section
