@@ -16,9 +16,11 @@ set(HEADERS
 )
 
 add_executable(PCO_LAB05_tests ${CMAKE_CURRENT_SOURCE_DIR}/tests/main.cpp ${HEADERS})
+add_executable(PCO_LAB05_debug ${CMAKE_CURRENT_SOURCE_DIR}/tests/debug.cpp ${HEADERS})
 add_executable(PCO_LAB05_benchmarks ${CMAKE_CURRENT_SOURCE_DIR}/benchmarks/main.cpp ${HEADERS})
 
 target_link_libraries(PCO_LAB05_tests PRIVATE GTest::GTest GTest::Main -lpcosynchro)
+target_link_libraries(PCO_LAB05_debug PRIVATE -lpcosynchro)
 target_link_libraries(PCO_LAB05_benchmarks PRIVATE benchmark::benchmark -lpcosynchro)
 
 include(GNUInstallDirs)
