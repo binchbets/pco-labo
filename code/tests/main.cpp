@@ -17,7 +17,7 @@ void test(int nbThreads, int size, int seed) {
     EXPECT_TRUE(isSorted(array)); // check that result is sorted
 }
 
-TEST(SortingTest, TestNoThreads) {
+TEST(SortingTest, NoThreads) {
     // TODO: Modify this test, and add others
     int nbThreads = 0;
 
@@ -27,7 +27,7 @@ TEST(SortingTest, TestNoThreads) {
 }
 
 
-TEST(SortingTest, Test1) {
+TEST(SortingTest, Size10Threads1) {
     // TODO: Modify this test, and add others
     int size = 10;
     int nbThreads = 1;
@@ -36,24 +36,41 @@ TEST(SortingTest, Test1) {
     test(nbThreads, size, seed);
 }
 
-TEST(SortingTest, MultiThread) {
+TEST(SortingTest, Size1000Threads2) {
     // TODO: Modify this test, and add others
-    int size = 10;
+    int size = 1 * 1000;
     int nbThreads = 2;
-    int seed = 0;
+    int seed = 634;
 
     test(nbThreads, size, seed);
 }
 
-TEST(SortingTest, LotOfThreads) {
+TEST(SortingTest, Size4Thousand8Threads) {
     // TODO: Modify this test, and add others
-    int size = 500;
+    int size = 4 * 1000;
     int nbThreads = 8;
-    int seed = 0;
+    int seed = 12;
 
     test(nbThreads, size, seed);
 }
 
+TEST(SortingTest, Size2Million3Threads) {
+    // TODO: Modify this test, and add others
+    int size = 2 * 1000 * 1000;
+    int nbThreads = 3;
+    int seed = 234;
+
+    test(nbThreads, size, seed);
+}
+
+TEST(SortingTest, Size10Million16Threads) {
+    // TODO: Modify this test, and add others
+    int size = 10 * 1000 * 1000;
+    int nbThreads = 16;
+    int seed = 3;
+
+    test(nbThreads, size, seed);
+}
 
 int main(int argc, char **argv) {
     ::testing::InitGoogleTest(&argc, argv);
