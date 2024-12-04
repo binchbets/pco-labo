@@ -12,13 +12,12 @@ void test(int nbThreads, int size, int seed) {
     sorter.sort(array);
 
     if (!isSorted(array)) {
-        std::cout << "Not sorted...";
+        std::cout << "Not sorted..." << std::endl;
+    } else {
+        std::cout << "Sorted :)" << std::endl;
     }
-
-    for (int i: array)
-        std::cout << i << ' ';
 }
 
 int main(int argc, char **argv) {
-    test(1, 20, 0);
+    test(4, 10'000'000, 0);
 }

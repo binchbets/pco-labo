@@ -37,8 +37,6 @@ public:
         std::vector<PcoThread> workers;
         workers.reserve(this->nbThreads);
 
-        std::cout << "Letzgo";
-
         for (size_t i = 0; i < this->nbThreads; i++) {
             workers.emplace_back(&Quicksort::do_sort, this);
         }
@@ -54,6 +52,13 @@ public:
         poisonMutex.unlock();
 
         // Everything has
+
+        for (auto &worker: workers) {
+            worker.requestStop();
+        }
+
+        // Restart all waiting threads
+        condVar.notifyAll();
 
         for (auto &worker: workers) {
             worker.join();
@@ -75,38 +80,21 @@ private:
 
 
     void put(Task<T> task) {
-        mutex.lock();
-
         queue.push(task);
-
-        mutex.unlock();
-
-        condVar.notifyOne();
     }
-
-    bool isPoisoned() {
-        poisonMutex.lock();
-        bool value = poison;
-        poisonMutex.unlock();
-
-        return value;
-    }
-
 
     void do_sort() {
-        while (!isPoisoned()) {
+        while (!PcoThread::thisThread()->stopRequested()) {
             mutex.lock();
 
             while (queue.empty()) {
                 condVar.wait(&mutex);
-            }
+                if (PcoThread::thisThread()->stopRequested()) {
+                    // Note, we don't decrement active, because it was poisoned.
+                    mutex.unlock();
 
-            // Stop early.
-            if (isPoisoned()) {
-                // Note, we don't decrement active, because it was poisoned.
-                mutex.unlock();
-
-                return;
+                    return;
+                }
             }
 
             Task<T> task = queue.front();
@@ -125,8 +113,13 @@ private:
 
             size_t p = partition(task.array, task.lo, task.hi);
 
+            mutex.lock();
             put(Task(task.array, task.lo, p==0 ? 0: p -1));
             put(Task(task.array, p + 1, task.hi));
+            mutex.unlock();
+
+            condVar.notifyOne();
+            condVar.notifyOne();
 
             finish();
         }
@@ -134,6 +127,7 @@ private:
 
     void finish() {
         mutex.lock();
+
         active--;
 
         if (active <= 0 && queue.empty()) {
@@ -143,7 +137,6 @@ private:
             poison = true;
             poisonMutex.unlock();
 
-            condVar.notifyAll();
             poisonCond.notifyOne();
             return;
         }
