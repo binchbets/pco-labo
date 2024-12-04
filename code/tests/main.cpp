@@ -17,6 +17,15 @@ void test(int nbThreads, int size, int seed) {
     EXPECT_TRUE(isSorted(array)); // check that result is sorted
 }
 
+TEST(SortingTest, TestNoThreads) {
+    // TODO: Modify this test, and add others
+    int nbThreads = 0;
+
+    EXPECT_THROW({
+         Quicksort<int> sorter(nbThreads);
+    }, std::invalid_argument);
+}
+
 
 TEST(SortingTest, Test1) {
     // TODO: Modify this test, and add others

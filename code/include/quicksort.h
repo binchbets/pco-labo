@@ -14,7 +14,7 @@
 template<typename T>
 class Task {
 public:
-    Task(std::vector<T> &array, size_t lo, size_t hi) : array(array), lo(lo),  hi(hi) {}
+    Task(std::vector<T> &array, size_t lo, size_t hi) : array(array), lo(lo),  hi(hi) {}    
 
     std::vector<T> &array;
     const size_t hi, lo;
@@ -26,8 +26,15 @@ public:
 template<typename T>
 class Quicksort : public MultithreadedSort<T> {
 public:
-    Quicksort(unsigned int nbThreads) : MultithreadedSort<T>(nbThreads) {}
-
+    /**
+     * @param nbThreads The number of workers threads to create that will run the quicksort.
+     * @throws std::invalid_argument If nbThreads is 0.
+     */
+    Quicksort(unsigned int nbThreads) : MultithreadedSort<T>(nbThreads) {
+        if (nbThreads == 0) {
+            throw std::invalid_argument("nbThreads cannot be 0");
+        }
+    }
 
     /**
      * @brief sort Manages the threads to sort the given sequence.
