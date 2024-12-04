@@ -65,7 +65,7 @@ public:
         }
 
         // Restart all waiting threads
-        condVar.notifyAll();
+        queueNotEmpty.notifyAll();
 
         for (auto &worker: workers) {
             worker.join();
@@ -83,7 +83,7 @@ private:
     bool poison = false;
 
     PcoMutex mutex;
-    PcoConditionVariable condVar;
+    PcoConditionVariable queueNotEmpty;
 
 
     void put(Task<T> task) {
@@ -95,7 +95,7 @@ private:
             mutex.lock();
 
             while (queue.empty()) {
-                condVar.wait(&mutex);
+                queueNotEmpty.wait(&mutex);
                 if (PcoThread::thisThread()->stopRequested()) {
                     // Note, we don't decrement active, because it was poisoned.
                     mutex.unlock();
@@ -125,8 +125,8 @@ private:
             put(Task(task.array, p + 1, task.hi));
             mutex.unlock();
 
-            condVar.notifyOne();
-            condVar.notifyOne();
+            queueNotEmpty.notifyOne();
+            queueNotEmpty.notifyOne();
 
             finish();
         }
