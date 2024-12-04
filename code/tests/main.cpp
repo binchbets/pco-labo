@@ -27,6 +27,25 @@ TEST(SortingTest, Test1) {
     test(nbThreads, size, seed);
 }
 
+TEST(SortingTest, MultiThread) {
+    // TODO: Modify this test, and add others
+    int size = 10;
+    int nbThreads = 2;
+    int seed = 0;
+
+    test(nbThreads, size, seed);
+}
+
+TEST(SortingTest, LotOfThreads) {
+    // TODO: Modify this test, and add others
+    int size = 500;
+    int nbThreads = 8;
+    int seed = 0;
+
+    test(nbThreads, size, seed);
+}
+
+
 int main(int argc, char **argv) {
     ::testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();
