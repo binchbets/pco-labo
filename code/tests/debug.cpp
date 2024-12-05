@@ -19,5 +19,5 @@ void test(int nbThreads, int size, int seed) {
 }
 
 int main(int argc, char **argv) {
-    test(4, 10'000'000, 0);
+    test(2, 10'000'000, 0);
 }
