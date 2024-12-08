@@ -18,7 +18,6 @@ void test(int nbThreads, int size, int seed) {
 }
 
 TEST(SortingTest, NoThreads) {
-    // TODO: Modify this test, and add others
     int nbThreads = 0;
 
     EXPECT_THROW({
@@ -28,7 +27,6 @@ TEST(SortingTest, NoThreads) {
 
 
 TEST(SortingTest, Size10Threads1) {
-    // TODO: Modify this test, and add others
     int size = 10;
     int nbThreads = 1;
     int seed = 0;
@@ -37,7 +35,6 @@ TEST(SortingTest, Size10Threads1) {
 }
 
 TEST(SortingTest, Size1000Threads2) {
-    // TODO: Modify this test, and add others
     int size = 1 * 1000;
     int nbThreads = 2;
     int seed = 634;
@@ -46,7 +43,6 @@ TEST(SortingTest, Size1000Threads2) {
 }
 
 TEST(SortingTest, Size4Thousand8Threads) {
-    // TODO: Modify this test, and add others
     int size = 4 * 1000;
     int nbThreads = 8;
     int seed = 12;
@@ -55,7 +51,6 @@ TEST(SortingTest, Size4Thousand8Threads) {
 }
 
 TEST(SortingTest, Size2Million3Threads) {
-    // TODO: Modify this test, and add others
     int size = 2 * 1000 * 1000;
     int nbThreads = 3;
     int seed = 234;
@@ -64,7 +59,6 @@ TEST(SortingTest, Size2Million3Threads) {
 }
 
 TEST(SortingTest, Size10Million16Threads) {
-    // TODO: Modify this test, and add others
     int size = 10 * 1000 * 1000;
     int nbThreads = 16;
     int seed = 3;
@@ -82,6 +76,22 @@ TEST(SortingTest, ConcurrencyTest) {
         test(nbThreads, size, seed);
         std::cout << "Ran iteration " << i << std::endl;
     }
+}
+
+TEST(SortingTest, SortedSameValuesTest) {
+    int size = 10 * 1000 * 1000;
+    int nbThreads = 4;
+    int seed = 3;
+
+    Quicksort<int> sorter(nbThreads);
+    std::vector<int> array = generateSequence(size, seed);
+    std::vector<int> copy(array);
+    std::sort(copy.begin(), copy.end());
+
+    sorter.sort(array);
+
+    EXPECT_TRUE(isSorted(array));
+    EXPECT_TRUE(std::equal(copy.begin(), copy.end(), array.begin()));
 }
 
 int main(int argc, char **argv) {
