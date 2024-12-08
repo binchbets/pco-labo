@@ -61,9 +61,11 @@ public:
         }
 
         // We wait until all threads are done
+        isDoneMutex.lock();
         while (!isDone) {
             isDoneCondition.wait(&isDoneMutex);
         }
+        isDoneMutex.unlock();
 
         for (auto &worker: workers) {
             worker.requestStop();
@@ -115,10 +117,10 @@ private:
      * do_sort is responsible for consuming available tasks and producing new ones.
      */
     void do_sort() {
-        while (!PcoThread::thisThread()->stopRequested()) {
+        while (!isDone) {
             mutex.lock();
             while (queue.empty()) {
-                if (PcoThread::thisThread()->stopRequested()) {
+                if (isDone) {
                     mutex.unlock();
                     return;
                 }

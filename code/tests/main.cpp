@@ -72,6 +72,7 @@ TEST(SortingTest, ConcurrencyTest) {
     int seed = 634;
 
     for (int i = 0; i < 10000; ++i) {
+        std::cout << "Processing " << i << std::endl;
         test(nbThreads, size, seed);
     }
 }
