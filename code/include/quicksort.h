@@ -68,7 +68,6 @@ public:
         for (auto &worker: workers) {
             worker.requestStop();
         }
-        std::cout << "queueNotEmpty about to be notified" << std::endl;
         // We notify all threads in order to terminate them gracefully
         queueNotEmpty.notifyAll();
 

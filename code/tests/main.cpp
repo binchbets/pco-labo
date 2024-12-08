@@ -67,14 +67,12 @@ TEST(SortingTest, Size10Million16Threads) {
 }
 
 TEST(SortingTest, ConcurrencyTest) {
-    // TODO: Modify this test, and add others
     int size = 1 * 1000;
     int nbThreads = 2;
     int seed = 634;
 
     for (int i = 0; i < 10000; ++i) {
         test(nbThreads, size, seed);
-        std::cout << "Ran iteration " << i << std::endl;
     }
 }
 
