@@ -70,6 +70,7 @@ public:
         for (auto &worker: workers) {
             worker.requestStop();
         }
+        // std::cout << "queueNotEmpty about to be notified" << std::endl;
         // We notify all threads in order to terminate them gracefully
         queueNotEmpty.notifyAll();
 
@@ -169,8 +170,8 @@ private:
             isDone = true;
             isDoneMutex.unlock();
 
-            isDoneCondition.notifyOne();
             // The last thread has computed its task, we are done.
+            isDoneCondition.notifyOne();
 
             return;
         }
