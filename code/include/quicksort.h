@@ -168,8 +168,8 @@ private:
             isDone = true;
             isDoneMutex.unlock();
 
-            isDoneCondition.notifyOne();
             // The last thread has computed its task, we are done.
+            isDoneCondition.notifyOne();
 
             return;
         }
