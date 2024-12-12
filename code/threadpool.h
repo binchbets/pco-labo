@@ -21,12 +21,16 @@ public:
 class ThreadPool : public PcoHoareMonitor {
 public:
     ThreadPool(int maxThreadCount, int maxNbWaiting, std::chrono::milliseconds idleTimeout)
-        : maxThreadCount(maxThreadCount), maxNbWaiting(maxNbWaiting), idleTimeout(idleTimeout), runnables(), threads(), availableThreads(), availableThread(), notEmpty(), notFull() {
+        : maxThreadCount(maxThreadCount), maxNbWaiting(maxNbWaiting), idleTimeout(idleTimeout), shouldStop(false), runnables(), threads(), availableThreads(), availableThread(), notEmpty(), notFull() {
         threads.reserve(maxThreadCount);
     }
 
     ~ThreadPool() {
         std::cout << "destructor called" << std::endl;
+
+        shouldStop = true;
+
+        std::cout << "canceling runnables" << std::endl;
 
         // TODO: Do we want to block on each call to `runnable->cancelRun()` ?
         while (!runnables.empty()) {
@@ -35,11 +39,19 @@ public:
             runnable->cancelRun();
         }
 
+        for (size_t i = 0; i < threads.size(); i++) {
+            signal(notEmpty);
+        }
+
+        std::cout << "joining threads" << std::endl;
+
         // TODO : End smoothly
         for (PcoThread* thread : threads) {
             thread->join();
             delete thread;
         }
+
+        std::cout << "destructor done" << std::endl;
     }
 
     /*
@@ -68,8 +80,6 @@ public:
 
                 // We can create a new thread
                 PcoThread* thread = new PcoThread(&ThreadPool::run, this);
-
-                std::cout << "adding new thread to containers" << std::endl;
 
                 availableThreads.push(thread);
                 threads.push_back(thread);
@@ -103,18 +113,27 @@ public:
 
             // TODO: Should probably be an optional.
             // We either get the runnable or none if the thread pool should be stopped.
-            std::unique_ptr<Runnable> runnable = get();
+            std::optional<std::unique_ptr<Runnable>> runnable = get();
+
+            if (!runnable.has_value()) {
+                return;
+            }
 
             std::cout << "running runnable" << std::endl;
-            runnable->run();
+            runnable.value()->run();
+            std::cout << "runnable done" << std::endl;
         }
     }
 
-    std::unique_ptr<Runnable> get() {
+    std::optional<std::unique_ptr<Runnable>> get() {
         monitorIn();
 
         if (runnables.empty()) {
             wait(notEmpty);
+        }
+
+        if (shouldStop) {
+            return std::nullopt;
         }
 
         std::unique_ptr<Runnable> runnable = std::move(runnables.front());
@@ -160,6 +179,8 @@ private:
      * Used to check whether a thread is available to perform a runnable.
      */
     Condition availableThread;
+
+    bool shouldStop;
 
     /**
      * List of runnables that
