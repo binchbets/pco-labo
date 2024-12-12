@@ -21,34 +21,35 @@ public:
 class ThreadPool : public PcoHoareMonitor {
 public:
     ThreadPool(int maxThreadCount, int maxNbWaiting, std::chrono::milliseconds idleTimeout)
-        : maxThreadCount(maxThreadCount), maxNbWaiting(maxNbWaiting), idleTimeout(idleTimeout), shouldStop(false), runnables(), threads(), availableThreads(), availableThread(), notEmpty(), notFull() {
+        : maxThreadCount(maxThreadCount), maxNbWaiting(maxNbWaiting), idleTimeout(idleTimeout), shouldStop(false), runningThreads(0), runnables(), threads(), notEmpty(), notFull() {
         threads.reserve(maxThreadCount);
     }
 
     ~ThreadPool() {
         std::cout << "destructor called" << std::endl;
 
+        monitorIn();
+
         shouldStop = true;
 
-        std::cout << "canceling runnables" << std::endl;
-
         // TODO: Do we want to block on each call to `runnable->cancelRun()` ?
-        while (!runnables.empty()) {
-            std::unique_ptr<Runnable> runnable = std::move(runnables.front());
-            runnables.pop();
-            runnable->cancelRun();
-        }
+        // while (!runnables.empty()) {
+        //    std::unique_ptr<Runnable> runnable = std::move(runnables.front());
+        //    runnables.pop();
+        //    runnable->cancelRun();
+        // }
 
         for (size_t i = 0; i < threads.size(); i++) {
             signal(notEmpty);
         }
 
+        monitorOut();
+
         std::cout << "joining threads" << std::endl;
 
         // TODO : End smoothly
-        for (PcoThread* thread : threads) {
-            thread->join();
-            delete thread;
+        for (PcoThread& thread : threads) {
+            thread.join();
         }
 
         std::cout << "destructor done" << std::endl;
@@ -74,18 +75,16 @@ public:
             return false;
         }
 
-        if (availableThreads.empty()) {
+        if (runningThreads == threads.size()) {
             if (threads.size() < maxThreadCount) {
                 std::cout << "creating new thread" << std::endl;
 
                 // We can create a new thread
-                PcoThread* thread = new PcoThread(&ThreadPool::run, this);
-
-                availableThreads.push(thread);
-                threads.push_back(thread);
+                threads.emplace_back(&ThreadPool::run, this);
+                runningThreads++;
             } else {
-                // We reached the max number of threads, wait until one is available.
-                wait(availableThread);
+                // We reached the max number of threads, wait until a thread picked a runnable.
+                wait(notFull);
             }
         }
 
@@ -109,8 +108,6 @@ public:
         std::cout << "new thread created" << std::endl;
 
         while (!PcoThread::thisThread()->stopRequested()) {
-            signal(availableThread);
-
             // TODO: Should probably be an optional.
             // We either get the runnable or none if the thread pool should be stopped.
             std::optional<std::unique_ptr<Runnable>> runnable = get();
@@ -133,6 +130,8 @@ public:
         }
 
         if (shouldStop) {
+            std::cout << "should stop" << std::endl;
+            monitorOut();
             return std::nullopt;
         }
 
@@ -152,11 +151,7 @@ public:
      */
     size_t currentNbThreads() {
         // TODO
-        monitorIn();
-        size_t count = availableThreads.size();
-        monitorOut();
-
-        return count;
+        return runningThreads;
     }
 
 private:
@@ -175,21 +170,16 @@ private:
      */
     Condition notEmpty;
 
-    /**
-     * Used to check whether a thread is available to perform a runnable.
-     */
-    Condition availableThread;
-
     bool shouldStop;
+
+    size_t runningThreads;
 
     /**
      * List of runnables that
      */
     std::queue<std::unique_ptr<Runnable>> runnables;
 
-    std::queue<PcoThread*> availableThreads;
-
-    std::vector<PcoThread*> threads;
+    std::vector<PcoThread> threads;
 };
 
 #endif // THREADPOOL_H
