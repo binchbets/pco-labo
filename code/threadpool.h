@@ -42,14 +42,16 @@ public:
             signal(notEmpty);
         }
 
+        timeoutThread.requestStop();
+        signal(threadWaiting);
+
         monitorOut();
 
-        timeoutThread.requestStop();
         timeoutThread.join();
 
         // TODO : End smoothly
-        for (PcoThread& thread : threads) {
-            thread.join();
+        for (std::unique_ptr<PcoThread> &thread : threads) {
+            thread->join();
         }
     }
 
@@ -75,7 +77,7 @@ public:
         if (runningThreads == threads.size()) {
             if (threads.size() < maxThreadCount) {
                 // We can create a new thread
-                threads.emplace_back(&ThreadPool::run, this);
+                threads.emplace_back(new PcoThread(&ThreadPool::run, this));
                 runningThreads++;
             }
         }
@@ -100,7 +102,6 @@ public:
             std::optional<std::unique_ptr<Runnable>> runnable = get();
 
             if (!runnable.has_value()) {
-                // TODO: Remove thread from threads vector
                 runningThreads--;
                 return;
             }
@@ -114,15 +115,24 @@ public:
 
         while(!PcoThread::thisThread()->stopRequested()) {
             monitorIn();
-            std::chrono::milliseconds timeout = idleTimeout;
-            if (!timestamps.empty()) {
-                timeout = idleTimeout - time_diff(timestamps.front());
+
+            if (timestamps.empty()) {
+                wait(threadWaiting);
+
+                if (PcoThread::thisThread()->stopRequested()) {
+                    monitorOut();
+                    return;
+                }
             }
+
+            std::chrono::milliseconds timeout = idleTimeout - time_diff(timestamps.front());
             monitorOut();
 
             PcoThread::usleep(timeout.count() * (uint64_t) 1000);
 
             monitorIn();
+            // We waited for quite some time, so it may be possible that the timestamp we waited on has finished.
+            // Also, we may have more than one thread that waits
             while (!timestamps.empty() && time_diff(timestamps.front()) > timeout) {
                 // The signaled thread will be the first one to have called `wait(notEmpty)`, which is the thread that
                 // has waited for the longest time.
@@ -144,7 +154,11 @@ public:
             // We push the current time into the timestamps queue. The queue will be sorted as any new timestamp will be
             // greater than the ones that are already in the queue.
             timestamps.push(std::chrono::high_resolution_clock::now());
+            // Announce to the timout thread that they can get started
+            signal(threadWaiting);
+            // Then wait (while possibly being waked by the timout task)
             wait(notEmpty);
+
             timestamps.pop();
         }
 
@@ -165,7 +179,6 @@ public:
      * just to be alive.
      */
     size_t currentNbThreads() {
-        // TODO
         return runningThreads;
     }
 
@@ -181,6 +194,11 @@ private:
      */
     Condition notEmpty;
 
+    /**
+     * Used to indicate to the timeout thread that at least a thread is waiting.
+     */
+    Condition threadWaiting;
+
     bool shouldStop;
 
     size_t runningThreads;
@@ -190,7 +208,7 @@ private:
      */
     std::queue<std::unique_ptr<Runnable>> runnables;
 
-    std::vector<PcoThread> threads;
+    std::vector<std::unique_ptr<PcoThread>> threads;
 
     std::queue<std::chrono::high_resolution_clock::time_point> timestamps;
 
