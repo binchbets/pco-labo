@@ -21,7 +21,8 @@ public:
 class ThreadPool : public PcoHoareMonitor {
 public:
     ThreadPool(int maxThreadCount, int maxNbWaiting, std::chrono::milliseconds idleTimeout)
-        : maxThreadCount(maxThreadCount), maxNbWaiting(maxNbWaiting), idleTimeout(idleTimeout), shouldStop(false), runningThreads(0), runnables(), threads(), notEmpty() {
+        : maxThreadCount(maxThreadCount), maxNbWaiting(maxNbWaiting), idleTimeout(idleTimeout),
+        shouldStop(false), runningThreads(0), runnables(), threads(), notEmpty(), timeoutThread(&ThreadPool::timeout, this) {
         threads.reserve(maxThreadCount);
     }
 
@@ -48,6 +49,9 @@ public:
         monitorOut();
 
         std::cout << "joining threads" << std::endl;
+
+        timeoutThread.requestStop();
+        timeoutThread.join();
 
         // TODO : End smoothly
         for (PcoThread& thread : threads) {
@@ -114,6 +118,8 @@ public:
             std::optional<std::unique_ptr<Runnable>> runnable = get();
 
             if (!runnable.has_value()) {
+                // TODO: Remove thread from threads vector
+                runningThreads--;
                 return;
             }
 
@@ -123,16 +129,45 @@ public:
         }
     }
 
+    void timeout() {
+        // TODO: Add Condition for waiting threads
+
+        while(!PcoThread::thisThread()->stopRequested()) {
+            monitorIn();
+            std::chrono::milliseconds timeout = idleTimeout;
+            if (!timestamps.empty()) {
+                timeout = idleTimeout - time_diff(timestamps.front());
+            }
+            monitorOut();
+
+            PcoThread::usleep(timeout.count() * (uint64_t) 1000);
+
+            monitorIn();
+            while (!timestamps.empty() && time_diff(timestamps.front()) > timeout) {
+                signal(notEmpty);
+            }
+            monitorOut();
+        }
+    }
+
+    std::chrono::milliseconds time_diff(std::chrono::high_resolution_clock::time_point other) {
+        auto diff = std::chrono::high_resolution_clock::now() - other;
+        return std::chrono::duration_cast<std::chrono::milliseconds>(diff);
+    }
+
     std::optional<std::unique_ptr<Runnable>> get() {
         monitorIn();
 
         std::cout << "get runnable" << std::endl;
 
         if (runnables.empty()) {
+            timestamps.push(std::chrono::high_resolution_clock::now());
             wait(notEmpty);
+            timestamps.pop();
         }
 
-        if (shouldStop) {
+        // We might have an empty runnables queue if the thread has been awakened by the timeout.
+        if (runnables.empty() || shouldStop) {
             std::cout << "should stop" << std::endl;
             monitorOut();
             return std::nullopt;
@@ -177,6 +212,10 @@ private:
     std::queue<std::unique_ptr<Runnable>> runnables;
 
     std::vector<PcoThread> threads;
+
+    std::queue<std::chrono::high_resolution_clock::time_point> timestamps;
+
+    PcoThread timeoutThread;
 };
 
 #endif // THREADPOOL_H
