@@ -124,6 +124,8 @@ public:
 
             monitorIn();
             while (!timestamps.empty() && time_diff(timestamps.front()) > timeout) {
+                // The signaled thread will be the first one to have called `wait(notEmpty)`, which is the thread that
+                // has waited for the longest time.
                 signal(notEmpty);
             }
             monitorOut();
@@ -139,6 +141,8 @@ public:
         monitorIn();
 
         if (runnables.empty()) {
+            // We push the current time into the timestamps queue. The queue will be sorted as any new timestamp will be
+            // greater than the ones that are already in the queue.
             timestamps.push(std::chrono::high_resolution_clock::now());
             wait(notEmpty);
             timestamps.pop();
