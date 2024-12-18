@@ -74,12 +74,11 @@ public:
             return false;
         }
 
-        if (runningThreads == threads.size()) {
-            if (threads.size() < maxThreadCount) {
-                // We can create a new thread
-                threads.emplace_back(new PcoThread(&ThreadPool::run, this));
-                runningThreads++;
-            }
+        // We can create a new thread if all threads are running, and we haven't reached the thread limit
+        if (runningThreads == threads.size() && threads.size() < maxThreadCount) {
+            // We can create a new thread
+            threads.emplace_back(new PcoThread(&ThreadPool::run, this));
+            runningThreads++;
         }
 
         runnables.push(std::move(runnable));
