@@ -32,12 +32,12 @@ public:
 
         shouldStop = true;
 
-        // TODO: Do we want to block on each call to `runnable->cancelRun()` ?
-        // while (!runnables.empty()) {
-        //    std::unique_ptr<Runnable> runnable = std::move(runnables.front());
-        //    runnables.pop();
-        //    runnable->cancelRun();
-        // }
+        // We cancel any remaining runnables that still exists.
+        while (!runnables.empty()) {
+            std::unique_ptr<Runnable> runnable = std::move(runnables.front());
+            runnables.pop();
+            runnable->cancelRun();
+        }
 
         std::cout << "signaling all threads" << std::endl;
 
