@@ -93,8 +93,6 @@ public:
      * This method is called by each thread to perform a Runnable task.
      */
     void run() {
-        std::cout << "new thread created" << std::endl;
-
         while (!PcoThread::thisThread()->stopRequested()) {
             // TODO: Should probably be an optional.
             // We either get the runnable or none if the thread pool should be stopped.
