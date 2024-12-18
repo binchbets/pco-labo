@@ -27,8 +27,6 @@ public:
     }
 
     ~ThreadPool() {
-        std::cout << "destructor called" << std::endl;
-
         monitorIn();
 
         shouldStop = true;
@@ -40,15 +38,11 @@ public:
             runnable->cancelRun();
         }
 
-        std::cout << "signaling all threads" << std::endl;
-
         for (size_t i = 0; i < threads.size(); i++) {
             signal(notEmpty);
         }
 
         monitorOut();
-
-        std::cout << "joining threads" << std::endl;
 
         timeoutThread.requestStop();
         timeoutThread.join();
@@ -57,8 +51,6 @@ public:
         for (PcoThread& thread : threads) {
             thread.join();
         }
-
-        std::cout << "destructor done" << std::endl;
     }
 
     /*
@@ -73,10 +65,7 @@ public:
         // TODO
         monitorIn();
 
-        std::cout << "starting" << std::endl;
-
         if (runnables.size() >= maxNbWaiting) {
-            std::cout << "too many runnables queued, canceling runnable" << std::endl;
             runnable->cancelRun();
             monitorOut();
 
@@ -85,23 +74,16 @@ public:
 
         if (runningThreads == threads.size()) {
             if (threads.size() < maxThreadCount) {
-                std::cout << "creating new thread" << std::endl;
-
                 // We can create a new thread
                 threads.emplace_back(&ThreadPool::run, this);
                 runningThreads++;
             }
         }
 
-        std::cout << "adding new runnable to queue" << std::endl;
-
         runnables.push(std::move(runnable));
-
         signal(notEmpty);
 
         monitorOut();
-
-        std::cout << "return true" << std::endl;
 
         return true;
     }
@@ -123,9 +105,7 @@ public:
                 return;
             }
 
-            std::cout << "running runnable" << std::endl;
             runnable.value()->run();
-            std::cout << "runnable done" << std::endl;
         }
     }
 
@@ -158,8 +138,6 @@ public:
     std::optional<std::unique_ptr<Runnable>> get() {
         monitorIn();
 
-        std::cout << "get runnable" << std::endl;
-
         if (runnables.empty()) {
             timestamps.push(std::chrono::high_resolution_clock::now());
             wait(notEmpty);
@@ -168,15 +146,12 @@ public:
 
         // We might have an empty runnables queue if the thread has been awakened by the timeout.
         if (runnables.empty() || shouldStop) {
-            std::cout << "should stop" << std::endl;
             monitorOut();
             return std::nullopt;
         }
 
         std::unique_ptr<Runnable> runnable = std::move(runnables.front());
         runnables.pop();
-
-        std::cout << "got runnable" << std::endl;
 
         monitorOut();
         return runnable;
