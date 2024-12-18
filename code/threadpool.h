@@ -21,7 +21,7 @@ public:
 class ThreadPool : public PcoHoareMonitor {
 public:
     ThreadPool(int maxThreadCount, int maxNbWaiting, std::chrono::milliseconds idleTimeout)
-        : maxThreadCount(maxThreadCount), maxNbWaiting(maxNbWaiting), idleTimeout(idleTimeout), shouldStop(false), runningThreads(0), runnables(), threads(), notEmpty(), notFull() {
+        : maxThreadCount(maxThreadCount), maxNbWaiting(maxNbWaiting), idleTimeout(idleTimeout), shouldStop(false), runningThreads(0), runnables(), threads(), notEmpty() {
         threads.reserve(maxThreadCount);
     }
 
@@ -38,6 +38,8 @@ public:
         //    runnables.pop();
         //    runnable->cancelRun();
         // }
+
+        std::cout << "signaling all threads" << std::endl;
 
         for (size_t i = 0; i < threads.size(); i++) {
             signal(notEmpty);
@@ -72,6 +74,8 @@ public:
         if (runnables.size() >= maxNbWaiting) {
             std::cout << "too many runnables queued, canceling runnable" << std::endl;
             runnable->cancelRun();
+            monitorOut();
+
             return false;
         }
 
@@ -82,9 +86,6 @@ public:
                 // We can create a new thread
                 threads.emplace_back(&ThreadPool::run, this);
                 runningThreads++;
-            } else {
-                // We reached the max number of threads, wait until a thread picked a runnable.
-                wait(notFull);
             }
         }
 
@@ -125,6 +126,8 @@ public:
     std::optional<std::unique_ptr<Runnable>> get() {
         monitorIn();
 
+        std::cout << "get runnable" << std::endl;
+
         if (runnables.empty()) {
             wait(notEmpty);
         }
@@ -137,8 +140,6 @@ public:
 
         std::unique_ptr<Runnable> runnable = std::move(runnables.front());
         runnables.pop();
-
-        signal(notFull);
 
         std::cout << "got runnable" << std::endl;
 
@@ -160,10 +161,6 @@ private:
     size_t maxNbWaiting;
     std::chrono::milliseconds idleTimeout;
 
-    /**
-     * Used to check whether the queue of runnables is full.
-     */
-    Condition notFull;
 
     /**
      * Used to check whether the queue of runnables is empty
