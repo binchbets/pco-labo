@@ -13,22 +13,25 @@
 class Runnable {
 public:
     virtual ~Runnable() = default;
+
     virtual void run() = 0;
+
     virtual void cancelRun() = 0;
+
     virtual std::string id() = 0;
 };
 
 class ThreadPool : public PcoHoareMonitor {
 public:
     ThreadPool(int maxThreadCount, int maxNbWaiting, std::chrono::milliseconds idleTimeout)
-        : maxThreadCount(maxThreadCount), maxNbWaiting(maxNbWaiting), idleTimeout(idleTimeout),
-        shouldStop(false), runningThreads(0), runnables(), threads(), notEmpty(), timeoutThread(&ThreadPool::timeout, this) {
+            : maxThreadCount(maxThreadCount), maxNbWaiting(maxNbWaiting), idleTimeout(idleTimeout),
+              shouldStop(false), runningThreads(0), runnables(), threads(), notEmpty(),
+              timeoutThread(&ThreadPool::timeout, this) {
         threads.reserve(maxThreadCount);
     }
 
     ~ThreadPool() {
         monitorIn();
-
         shouldStop = true;
 
         // We cancel any remaining runnables that still exists.
@@ -46,11 +49,9 @@ public:
         signal(threadWaiting);
 
         monitorOut();
-
         timeoutThread.join();
 
-        // TODO : End smoothly
-        for (std::unique_ptr<PcoThread> &thread : threads) {
+        for (std::unique_ptr<PcoThread>& thread: threads) {
             thread->join();
         }
     }
@@ -108,9 +109,7 @@ public:
     }
 
     void timeout() {
-        // TODO: Add Condition for waiting threads
-
-        while(!PcoThread::thisThread()->stopRequested()) {
+        while (!PcoThread::thisThread()->stopRequested()) {
             monitorIn();
 
             if (timestamps.empty()) {
@@ -123,18 +122,39 @@ public:
             }
 
             std::chrono::milliseconds timeout = idleTimeout - time_diff(timestamps.front());
+
             monitorOut();
-
             PcoThread::usleep(timeout.count() * (uint64_t) 1000);
-
             monitorIn();
+
+            bool shouldSweep = false;
             // We waited for quite some time, so it may be possible that the timestamp we waited on has finished.
             // Also, we may have more than one thread that waits
             while (!timestamps.empty() && time_diff(timestamps.front()) > timeout) {
                 // The signaled thread will be the first one to have called `wait(notEmpty)`, which is the thread that
                 // has waited for the longest time.
+                shouldSweep = true;
                 signal(notEmpty);
             }
+
+            // Remove any threads that have been stopped.
+            if (shouldSweep) {
+                threads.erase(
+                        std::remove_if(
+                                threads.begin(),
+                                threads.end(),
+                                [&](const auto &item) {
+                                    bool stopRequested = item->stopRequested();
+                                    if (stopRequested) {
+                                        item->join();
+                                    }
+                                    return stopRequested;
+                                }
+                        ),
+                        threads.cend()
+                );
+            }
+
             monitorOut();
         }
     }
@@ -162,6 +182,9 @@ public:
         // We might have an empty runnables queue if the thread has been awakened by the timeout.
         if (runnables.empty() || shouldStop) {
             monitorOut();
+
+            PcoThread::thisThread()->requestStop();
+
             return std::nullopt;
         }
 
