@@ -95,7 +95,6 @@ public:
      */
     void run() {
         while (!PcoThread::thisThread()->stopRequested()) {
-            // TODO: Should probably be an optional.
             // We either get the runnable or none if the thread pool should be stopped.
             std::optional<std::unique_ptr<Runnable>> runnable = get();
 
