@@ -25,9 +25,14 @@ class ThreadPool : public PcoHoareMonitor {
 public:
     ThreadPool(int maxThreadCount, int maxNbWaiting, std::chrono::milliseconds idleTimeout)
             : maxThreadCount(maxThreadCount), maxNbWaiting(maxNbWaiting), idleTimeout(idleTimeout),
-              shouldStop(false), runningThreads(0), runnables(), threads(), notEmpty(),
-              timeoutThread(&ThreadPool::timeout, this) {
+              shouldStop(false), runningThreads(0), runnables(), threads(), notEmpty() {
         threads.reserve(maxThreadCount);
+
+        if (maxThreadCount == 0) {
+            throw std::invalid_argument("the max thread count should be greater than 0");
+        }
+
+        this->timeoutThread = std::make_unique<PcoThread>(&ThreadPool::timeout, this);
     }
 
     ~ThreadPool() {
@@ -45,11 +50,11 @@ public:
             signal(notEmpty);
         }
 
-        timeoutThread.requestStop();
+        timeoutThread->requestStop();
         signal(threadWaiting);
 
         monitorOut();
-        timeoutThread.join();
+        timeoutThread->join();
 
         for (std::unique_ptr<PcoThread>& thread: threads) {
             thread->join();
@@ -65,7 +70,6 @@ public:
      * If the runnable has been started, returns true, and else (the last case), return false.
      */
     bool start(std::unique_ptr<Runnable> runnable) {
-        // TODO
         monitorIn();
 
         if (runnables.size() >= maxNbWaiting) {
@@ -107,6 +111,9 @@ public:
         }
     }
 
+    /**
+     * Thread timeout handling
+     */
     void timeout() {
         while (!PcoThread::thisThread()->stopRequested()) {
             monitorIn();
@@ -163,6 +170,11 @@ public:
         return std::chrono::duration_cast<std::chrono::milliseconds>(diff);
     }
 
+    /**
+     * Returns new runnables to process.
+     *
+     * @return Either an Runnable to run or an empty optional when no runnables exists.
+     */
     std::optional<std::unique_ptr<Runnable>> get() {
         monitorIn();
 
@@ -207,7 +219,6 @@ private:
     size_t maxNbWaiting;
     std::chrono::milliseconds idleTimeout;
 
-
     /**
      * Used to check whether the queue of runnables is empty
      */
@@ -218,20 +229,36 @@ private:
      */
     Condition threadWaiting;
 
+    /**
+     * shouldStop tells the threads if the ThreadPool destructor has been called.
+     */
     bool shouldStop;
 
+    /**
+     * The number of running threads in the thread pool
+     */
     size_t runningThreads;
 
     /**
-     * List of runnables that
+     * List of runnables that have not yet been picked up by a thread
      */
     std::queue<std::unique_ptr<Runnable>> runnables;
 
+    /**
+     * The threads of the ThreadPool
+     */
     std::vector<std::unique_ptr<PcoThread>> threads;
 
+    /**
+     * A queue of timestamps that indicates points in time when the threads
+     * blocked on the notEmpty condition (no runnables to pickup).
+     */
     std::queue<std::chrono::high_resolution_clock::time_point> timestamps;
 
-    PcoThread timeoutThread;
+    /**
+     * The thread responsible for handling threads timeout.
+     */
+    std::unique_ptr<PcoThread> timeoutThread;
 };
 
 #endif // THREADPOOL_H

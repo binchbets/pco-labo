@@ -396,6 +396,12 @@ TEST_F(ThreadpoolTest, testCase5)
     }
 }
 
+TEST_F(ThreadpoolTest, TestMaxThreadZero)
+{
+    EXPECT_THROW({
+         ThreadPool pool(0, 10, std::chrono::milliseconds{5});
+    }, std::invalid_argument);
+}
 
 int main(int argc, char **argv) {
     testing::InitGoogleTest(&argc, argv);
