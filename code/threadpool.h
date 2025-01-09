@@ -9,6 +9,7 @@
 #include <pcosynchro/pcologger.h>
 #include <pcosynchro/pcothread.h>
 #include <pcosynchro/pcohoaremonitor.h>
+#include <list>
 
 class Runnable {
 public:
@@ -56,7 +57,7 @@ public:
         monitorOut();
         timeoutThread->join();
 
-        for (std::unique_ptr<PcoThread>& thread: threads) {
+        for (std::unique_ptr<PcoThread> &thread: threads) {
             thread->join();
         }
     }
@@ -181,23 +182,30 @@ public:
         if (runnables.empty()) {
             // We push the current time into the timestamps queue. The queue will be sorted as any new timestamp will be
             // greater than the ones that are already in the queue.
-            timestamps.push(std::chrono::high_resolution_clock::now());
+            timestamps.push_back(std::chrono::high_resolution_clock::now());
             // Announce to the timout thread that they can get started
             signal(threadWaiting);
             // Then wait (while possibly being waked by the timout task)
             wait(notEmpty);
-
-            timestamps.pop();
         }
 
         // We might have an empty runnables queue if the thread has been awakened by the timeout.
         if (runnables.empty() || shouldStop) {
+            // We need to pop the timestamp that has waited the most,
+            // otherwise the timeout system will clear all waiting threads (not a good idea)
+            if (!timestamps.empty())
+                timestamps.pop_front();
+
             monitorOut();
 
             PcoThread::thisThread()->requestStop();
 
             return std::nullopt;
         }
+
+        // Pop the timestamp that has waited for the least amount of time
+        if (!timestamps.empty())
+            timestamps.pop_back();
 
         std::unique_ptr<Runnable> runnable = std::move(runnables.front());
         runnables.pop();
@@ -253,7 +261,7 @@ private:
      * A queue of timestamps that indicates points in time when the threads
      * blocked on the notEmpty condition (no runnables to pickup).
      */
-    std::queue<std::chrono::high_resolution_clock::time_point> timestamps;
+    std::list<std::chrono::high_resolution_clock::time_point> timestamps;
 
     /**
      * The thread responsible for handling threads timeout.

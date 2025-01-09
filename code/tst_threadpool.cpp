@@ -396,6 +396,50 @@ TEST_F(ThreadpoolTest, testCase5)
     }
 }
 
+///
+/// \brief A testcase with a pool of 5 threads with an idle timout of 1 second running 5 tasks,
+/// and adding a task every second for 10 seconds that takes 1  second.
+/// We need to validate that there is only 2 threads are needed (one processing, one waiting), and not 5
+///
+TEST_F(ThreadpoolTest, TestTimeoutHandlingLongestWaitingThread)
+{
+    initTestCase();
+    ThreadPool pool(5, 10, std::chrono::milliseconds{1000});
+
+    // Starts the runnables
+    for(size_t i = 0; i < 10; i++) {
+        std::string runnableId = "Run_" + std::to_string(i);
+        // A runnable has a runtime of (i+1) seconds
+        auto runnable = std::make_unique<TestRunnable>(this, runnableId, 1000000);
+        runnableStarted(runnableId);
+        bool startStatus = pool.start(std::move(runnable));
+        EXPECT_TRUE(startStatus);
+    }
+
+    // Wait half a second
+    PcoThread::usleep(500000);
+
+    for(size_t i = 0; i < 10; i++) {
+        // Start a new Runnable each second
+        std::string runnableId = "Run_after_" + std::to_string(i);
+        auto runnable = std::make_unique<TestRunnable>(this, runnableId, 900000);
+        runnableStarted(runnableId);
+        bool startStatus = pool.start(std::move(runnable));
+        EXPECT_TRUE(startStatus);
+        PcoThread::usleep(1000000);
+    }
+
+    EXPECT_EQ(pool.currentNbThreads(), 2);
+
+    // Wait for the last one
+    PcoThread::usleep(1000000);
+
+    // Check that every runnable is really finished
+    for (const auto& [key, value] : m_runningState) {
+        EXPECT_EQ(value, false) << "Failed";
+    }
+}
+
 TEST_F(ThreadpoolTest, TestMaxThreadZero)
 {
     EXPECT_THROW({
