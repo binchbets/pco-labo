@@ -416,17 +416,19 @@ TEST_F(ThreadpoolTest, TestTimeoutHandlingLongestWaitingThread)
         EXPECT_TRUE(startStatus);
     }
 
+    EXPECT_EQ(pool.currentNbThreads(), 5);
+
     // Wait half a second
     PcoThread::usleep(500000);
 
-    for(size_t i = 0; i < 10; i++) {
+    for(size_t i = 0; i < 20; i++) {
         // Start a new Runnable each second
         std::string runnableId = "Run_after_" + std::to_string(i);
-        auto runnable = std::make_unique<TestRunnable>(this, runnableId, 900000);
+        auto runnable = std::make_unique<TestRunnable>(this, runnableId, 500000);
         runnableStarted(runnableId);
         bool startStatus = pool.start(std::move(runnable));
         EXPECT_TRUE(startStatus);
-        PcoThread::usleep(1000000);
+        PcoThread::usleep(510000);
     }
 
     EXPECT_EQ(pool.currentNbThreads(), 2);
