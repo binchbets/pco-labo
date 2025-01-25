@@ -74,14 +74,14 @@ public:
 };
 
 
-class ThreadCar : public ObservableThread
+class ThreadVehicle : public ObservableThread
 {
 private:
     BridgeManager& bridgeManager;
     float weight;
 
 public:
-    explicit ThreadCar(BridgeManager &bridgeManager, std::string id = "", float weight = 10.0f) : bridgeManager(bridgeManager), ObservableThread(std::move(id)), weight(weight)
+    explicit ThreadVehicle(BridgeManager &bridgeManager, std::string id = "", float weight = 10.0f) : bridgeManager(bridgeManager), ObservableThread(std::move(id)), weight(weight)
     {
         scenarioGraph = std::make_unique<ScenarioGraph>();
         auto scenario = scenarioGraph->createNode(this, -1);
@@ -147,11 +147,11 @@ public:
     
     void build() override
     {
-        threads.emplace_back(std::make_unique<ThreadCar>(bridgeManager, "truck1", 31.0f));
-        threads.emplace_back(std::make_unique<ThreadCar>(bridgeManager, "truck2", 31.0f));
+        threads.emplace_back(std::make_unique<ThreadVehicle>(bridgeManager, "car", 3.0f));
+        threads.emplace_back(std::make_unique<ThreadVehicle>(bridgeManager, "truck", 31.0f));
 
-        scenarioBuilder = std::make_unique<ScenarioBuilderBuffer>(1'000'000);
-        scenarioBuilder->init(threads, 24);
+        scenarioBuilder = std::make_unique<ScenarioBuilderBuffer>();
+        scenarioBuilder->init(threads, 13);
     }
 
     void preRun(Scenario& /*scenario*/) override
@@ -160,9 +160,11 @@ public:
 
     void postRun(Scenario &scenario) override
     {
+        /* Commented out for performance.
         std::cout << "---------------------------------------" << std::endl;
         std::cout << "Scenario : ";
         ScenarioPrint::printScenario(scenario);
+         */
     }
 
     void finalReport() override 
