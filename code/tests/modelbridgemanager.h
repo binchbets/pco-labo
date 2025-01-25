@@ -98,6 +98,7 @@ public:
         EDGE(scenario, p1);
 
         EDGE(p1, p2);
+        EDGE(p1, p4);
         EDGE(p1, p5);
 
         //EDGE(p1, p3);
