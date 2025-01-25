@@ -2,6 +2,7 @@
 #include "modeltemplate.h"
 #include "modelbridgemanager.h"
 #include "pcomodelchecker.h"
+#include "modelnumbers.h"
 
 #include <pcosynchro/pcomanager.h>
 

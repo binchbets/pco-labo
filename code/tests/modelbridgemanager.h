@@ -8,6 +8,9 @@
 #include "pcosynchro/pcosemaphore.h"
 #include "pcoconcurrencyanalyzer.h"
 
+
+#define EDGE(first, second) first->next.push_back(second)
+
 class BridgeManager
 {
     PcoSemaphore mutex;
@@ -38,13 +41,15 @@ public:
             mutex.acquire();
         }
 
+        //startSection(3);
         currentWeight += weight;
 
         if (nbWaitingAccess > 0) {
+            startSection(4);
             nbWaitingAccess--;
             waitingAccess.release();
         }
-        startSection(3);
+        startSection(5);
 
         mutex.release();
 
@@ -53,12 +58,17 @@ public:
     void leave(float weight)
     {
         mutex.acquire();
+
+        //startSection(6);
         currentWeight -= weight;
+
         if (nbWaitingAccess > 0) {
+            startSection(7);
             nbWaitingAccess--;
             waitingAccess.release();
         }
 
+        startSection(8);
         mutex.release();
     }
 };
@@ -68,61 +78,55 @@ class ThreadCar : public ObservableThread
 {
 private:
     BridgeManager& bridgeManager;
-    float WEIGHT = 3.0f;
+    float weight;
 
 public:
-    explicit ThreadCar(BridgeManager &bridgeManager, std::string id = "") : bridgeManager(bridgeManager), ObservableThread(std::move(id))
+    explicit ThreadCar(BridgeManager &bridgeManager, std::string id = "", float weight = 10.0f) : bridgeManager(bridgeManager), ObservableThread(std::move(id)), weight(weight)
     {
         scenarioGraph = std::make_unique<ScenarioGraph>();
         auto scenario = scenarioGraph->createNode(this, -1);
         auto p1 = scenarioGraph->createNode(this, 1);
         auto p2 = scenarioGraph->createNode(this, 2);
-        auto p3 = scenarioGraph->createNode(this, 3);
+        //auto p3 = scenarioGraph->createNode(this, 3);
+        auto p4 = scenarioGraph->createNode(this, 4);
+        auto p5 = scenarioGraph->createNode(this, 5);
+        //auto p6 = scenarioGraph->createNode(this, 6);
+        auto p7 = scenarioGraph->createNode(this, 7);
+        auto p8 = scenarioGraph->createNode(this, 8);
         scenario->next.push_back(p1);
-        p1->next.push_back(p2);
-        p1->next.push_back(p3);
-        p2->next.push_back(p2);
-        p2->next.push_back(p3);
+
+        EDGE(scenario, p1);
+
+        EDGE(p1, p2);
+        EDGE(p1, p5);
+
+        //EDGE(p1, p3);
+
+        EDGE(p2, p2);
+        EDGE(p2, p4);
+        EDGE(p2, p5);
+
+        //EDGE(p3, p4);
+        //EDGE(p3, p5);
+
+        EDGE(p4, p5);
+
+        EDGE(p5, p7);
+        EDGE(p5, p8);
+
+        //EDGE(p6, p7);
+        //EDGE(p6, p8);
+
+        EDGE(p7, p8);
+
         scenarioGraph->setInitialNode(scenario);
     }
 
 private:
     void run() override
     {
-        bridgeManager.access(WEIGHT);
-        bridgeManager.leave(WEIGHT);
-        endScenario();
-    }
-};
-
-class ThreadTruck : public ObservableThread
-{
-private:
-    BridgeManager& bridgeManager;
-    float WEIGHT = 30.0f;
-
-public:
-    explicit ThreadTruck(BridgeManager &bridgeManager, std::string id = "") : bridgeManager(bridgeManager), ObservableThread(std::move(id))
-    {
-        scenarioGraph = std::make_unique<ScenarioGraph>();
-        auto scenario = scenarioGraph->createNode(this, -1);
-        auto p1 = scenarioGraph->createNode(this, 1);
-        auto p2 = scenarioGraph->createNode(this, 2);
-        auto p3 = scenarioGraph->createNode(this, 3);
-        scenario->next.push_back(p1);
-        p1->next.push_back(p2);
-        p1->next.push_back(p3);
-        p2->next.push_back(p2);
-        p2->next.push_back(p3);
-        scenarioGraph->setInitialNode(scenario);
-    }
-
-private:
-    void run() override
-    {
-        bridgeManager.access(WEIGHT);
-        startSection(2);
-        bridgeManager.leave(WEIGHT);
+        bridgeManager.access(weight);
+        bridgeManager.leave(weight);
         endScenario();
     }
 };
@@ -143,12 +147,11 @@ public:
     
     void build() override
     {
-        threads.emplace_back(std::make_unique<ThreadCar>(bridgeManager, "car"));
-        threads.emplace_back(std::make_unique<ThreadTruck>(bridgeManager, "truck1"));
-        threads.emplace_back(std::make_unique<ThreadTruck>(bridgeManager, "truck2"));
+        threads.emplace_back(std::make_unique<ThreadCar>(bridgeManager, "truck1", 31.0f));
+        threads.emplace_back(std::make_unique<ThreadCar>(bridgeManager, "truck2", 31.0f));
 
-        scenarioBuilder = std::make_unique<ScenarioBuilderBuffer>();
-        scenarioBuilder->init(threads, 9);
+        scenarioBuilder = std::make_unique<ScenarioBuilderBuffer>(1'000'000);
+        scenarioBuilder->init(threads, 24);
     }
 
     void preRun(Scenario& /*scenario*/) override
