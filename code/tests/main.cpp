@@ -1,6 +1,6 @@
 
 #include "modeltemplate.h"
-#include "modelnumbers.h"
+#include "modelbridgemanager.h"
 #include "pcomodelchecker.h"
 
 #include <pcosynchro/pcomanager.h>
@@ -18,7 +18,7 @@ int main(int /*argc*/, char */*argv*/[])
         // checker.run();
     }
     {
-        ModelNumbers model;
+        ModelBridgeManager model;
         PcoModelChecker checker;
         checker.setModel(&model);
         checker.run();
